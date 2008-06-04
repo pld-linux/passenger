@@ -76,6 +76,7 @@ fi
 %defattr(644,root,root,755)
 %doc INSTALL README
 #%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{apacheconfdir}/*.conf
+%attr(755,root,root) /usr/lib/ruby/*/*-linux/*.so
 %attr(755,root,root) %{apachelibdir}/*.so
 %attr(755,root,root) %{_bindir}/passenger-*
 %{ruby_rubylibdir}/passenger
