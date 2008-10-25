@@ -13,7 +13,7 @@ Name:		apache-mod_rails
 Version:	1.0.5
 Release:	1
 License:	Apache
-Group:		Networking/Daemons
+Group:		Networking/Daemons/HTTP
 Source0:	http://rubyforge.org/frs/download.php/36739/passenger-%{version}.tar.gz
 # Source0-md5:	28cf289ae1d0fa93cd077deedca35e76
 #Source1:	%{name}.conf
