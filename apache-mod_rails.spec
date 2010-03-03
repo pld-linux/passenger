@@ -30,7 +30,6 @@ BuildRequires:	ruby-rubygems
 BuildRequires:	ruby-devel
 BuildRequires:	ruby-rake
 BuildRequires:	sed >= 4.0
-BuildRequires:	setup.rb
 Provides:	apache(mod_rails)
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
@@ -68,8 +67,6 @@ Dokumentacji w formacie ri dla %{pkgname}.
 %setup -q -c
 %{__tar} xf %{SOURCE0} -O data.tar.gz | %{__tar} xz
 find -newer README -o -print | xargs touch --reference %{SOURCE0}
-
-cp %{_datadir}/setup.rb .
 
 # TODO : ugly metod - but works
 %{__sed} -i 's/CXXFLAGS = "/CXXFLAGS = "`pkg-config --cflags apr-util-1`/ ' Rakefile
