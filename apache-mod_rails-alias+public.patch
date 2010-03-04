@@ -1,0 +1,263 @@
+
+http://code.google.com/p/phusion-passenger/issues/detail?id=30&colspec=ID%20Type%20Status%20Priority%20Milestone%20Stars%20Summary
+http://code.google.com/p/phusion-passenger/issues/detail?id=136&colspec=ID%20Type%20Status%20Priority%20Milestone%20Stars%20Summary
+
+Problem: The problem with RailsBaseURI is that it expects Rails directory
+to be in virtualhost's documentroot. If it does'nt then you have to create
+symlink to use rails application outside of document root.
+
+Fix: Instead of creating symlinks there could be second optional argument
+for RailsBaseURI which specifies full path to Rails application's public
+directory.
+
+For example, instead of creating symlink /var/www/somehost/railsapp1 ->
+/home/user/railsapp1/public and:
+<virtualhost *>
+DocumentRoot /var/www/somehost
+RailsBaseURI /railsapp1
+</virtualhost>
+
+we skip the symlink and specify the full path in apache conf:
+<virtualhost *>
+DocumentRoot /var/www/somehost
+RailsBaseURI /railsapp1 /home/user/railsapp1/public
+</virtualhost>
+
+The patch (for 2.0.3) that does the thing is attached (patches also
+RackBaseURI).
+
+The combined patch:
+
+1) Aliases and rewrite rules now apply when translating RailsBaseURI into
+physical path. Resolved paths are cached.
+2) Current behaviour remains: DocumentRoot+RailsBaseURI works also
+3) If RailsBaseURI or RackBaseURI has second argument then this second argument
+is used as physical path to rails public directory. This eliminates the need
+for extra lookup using Apache subrequest and the overhead caused by it.
+
+diff -wur ext/apache2/Configuration.cpp ext/apache2/Configuration.cpp
+--- ext/apache2/Configuration.cpp	2008-08-09 15:19:15.000000000 +0300
++++ ext/apache2/Configuration.cpp	2008-09-23 22:06:15.000000000 +0300
+@@ -75,11 +75,11 @@
+ 	DirConfig *add = (DirConfig *) addv;
+ 	
+ 	config->railsBaseURIs = base->railsBaseURIs;
+-	for (set<string>::const_iterator it(add->railsBaseURIs.begin()); it != add->railsBaseURIs.end(); it++) {
++	for (set<BaseURIConfig*>::const_iterator it(add->railsBaseURIs.begin()); it != add->railsBaseURIs.end(); it++) {
+ 		config->railsBaseURIs.insert(*it);
+ 	}
+ 	config->rackBaseURIs = base->rackBaseURIs;
+-	for (set<string>::const_iterator it(add->rackBaseURIs.begin()); it != add->rackBaseURIs.end(); it++) {
++	for (set<BaseURIConfig*>::const_iterator it(add->rackBaseURIs.begin()); it != add->rackBaseURIs.end(); it++) {
+ 		config->rackBaseURIs.insert(*it);
+ 	}
+ 	
+@@ -275,18 +275,27 @@
+  *************************************************/
+ 
+ static const char *
+-cmd_rails_base_uri(cmd_parms *cmd, void *pcfg, const char *arg) {
++cmd_rails_base_uri(cmd_parms *cmd, void *pcfg, const char *arg, const char *arg2) {
+ 	DirConfig *config = (DirConfig *) pcfg;
++	BaseURIConfig *bConfig = new BaseURIConfig;
+ 	if (strlen(arg) == 0) {
+ 		return "RailsBaseURI may not be set to the empty string";
+ 	} else if (arg[0] != '/') {
+ 		return "RailsBaseURI must start with a slash (/)";
+ 	} else if (strlen(arg) > 1 && arg[strlen(arg) - 1] == '/') {
+ 		return "RailsBaseURI must not end with a slash (/)";
+-	} else {
+-		config->railsBaseURIs.insert(arg);
+-		return NULL;
+ 	}
++
++	apr_pool_cleanup_register(cmd->pool, bConfig, destroy_config_struct<BaseURIConfig>, apr_pool_cleanup_null);
++
++	bConfig->baseURI = arg;
++
++	if (arg2) {
++	    bConfig->publicDirectory = arg2;
++	}
++
++	config->railsBaseURIs.insert(bConfig);
++	return NULL;
+ }
+ 
+ static const char *
+@@ -321,18 +331,26 @@
+  *************************************************/
+ 
+ static const char *
+-cmd_rack_base_uri(cmd_parms *cmd, void *pcfg, const char *arg) {
++cmd_rack_base_uri(cmd_parms *cmd, void *pcfg, const char *arg, const char *arg2) {
+ 	DirConfig *config = (DirConfig *) pcfg;
++	BaseURIConfig *bConfig = new BaseURIConfig;
+ 	if (strlen(arg) == 0) {
+ 		return "RackBaseURI may not be set to the empty string";
+ 	} else if (arg[0] != '/') {
+ 		return "RackBaseURI must start with a slash (/)";
+ 	} else if (strlen(arg) > 1 && arg[strlen(arg) - 1] == '/') {
+ 		return "RackBaseURI must not end with a slash (/)";
+-	} else {
+-		config->rackBaseURIs.insert(arg);
+-		return NULL;
+ 	}
++
++	apr_pool_cleanup_register(cmd->pool, bConfig, destroy_config_struct<BaseURIConfig>, apr_pool_cleanup_null);
++
++	bConfig->baseURI = arg;
++
++	if (arg2)  {
++		bConfig->publicDirectory = arg2;
++	}
++	config->rackBaseURIs.insert(bConfig);
++ 	return NULL;
+ }
+ 
+ static const char *
+@@ -414,7 +433,7 @@
+ 		"The user that Rails/Rack applications must run as when user switching fails or is disabled."),
+ 
+ 	// Rails-specific settings.
+-	AP_INIT_TAKE1("RailsBaseURI",
++	AP_INIT_TAKE12("RailsBaseURI",
+ 		(Take1Func) cmd_rails_base_uri,
+ 		NULL,
+ 		RSRC_CONF,
+@@ -441,7 +460,7 @@
+ 		"The spawn method to use."),
+ 	
+ 	// Rack-specific settings.
+-	AP_INIT_TAKE1("RackBaseURI",
++	AP_INIT_TAKE12("RackBaseURI",
+ 		(Take1Func) cmd_rack_base_uri,
+ 		NULL,
+ 		RSRC_CONF,
+diff -wur ext/apache2/Configuration.h ext/apache2/Configuration.h
+--- ext/apache2/Configuration.h	2008-08-09 15:19:33.000000000 +0300
++++ ext/apache2/Configuration.h	2008-09-23 22:06:15.000000000 +0300
+@@ -41,20 +41,25 @@
+ 	
+ 		using namespace std;
+ 		
++		struct BaseURIConfig {
++			std::string baseURI;
++			std::string publicDirectory;
++		};
++
+ 		/**
+ 		 * Per-directory configuration information.
+ 		 *
+ 		 * Use the getter methods to query information, because those will return
+ 		 * the default value if the value is not specified.
+ 		 */
+ 		struct DirConfig {
+ 			enum Threeway { ENABLED, DISABLED, UNSET };
+ 			enum SpawnMethod { SM_UNSET, SM_SMART, SM_SMART_LV2, SM_CONSERVATIVE };
+ 			
+ 			Threeway enabled;
+ 			
+-			std::set<std::string> railsBaseURIs;
+-			std::set<std::string> rackBaseURIs;
++			std::set<BaseURIConfig*> railsBaseURIs;
++			std::set<BaseURIConfig*> rackBaseURIs;
+ 			
+ 			/** Whether to autodetect Rails applications. */
+ 			Threeway autoDetectRails;
+diff -wur ext/apache2/DirectoryMapper.h ext/apache2/DirectoryMapper.h
+--- ext/apache2/DirectoryMapper.h	2008-08-09 15:19:15.000000000 +0300
++++ ext/apache2/DirectoryMapper.h	2008-09-23 22:13:36.000000000 +0300
+@@ -87,6 +87,7 @@
+ 	request_rec *r;
+ 	bool baseURIKnown;
+ 	const char *baseURI;
++	BaseURIConfig *bConfig;
+ 	ApplicationType appType;
+ 	
+ 	inline bool shouldAutoDetectRails() {
+@@ -114,6 +115,7 @@
+ 		appType = NONE;
+ 		baseURIKnown = false;
+ 		baseURI = NULL;
++		bConfig = NULL;
+ 	}
+ 	
+ 	/**
+@@ -136,7 +138,7 @@
+ 			return baseURI;
+ 		}
+ 		
+-		set<string>::const_iterator it;
++		set<BaseURIConfig *>::const_iterator it;
+ 		const char *uri = r->uri;
+ 		size_t uri_len = strlen(uri);
+ 		
+@@ -146,7 +148,8 @@
+ 		}
+ 		
+ 		for (it = config->railsBaseURIs.begin(); it != config->railsBaseURIs.end(); it++) {
+-			const string &base(*it);
++			BaseURIConfig * bc = (*it);
++			const string base = bc->baseURI;
+ 			if (  base == "/"
+ 			 || ( uri_len == base.size() && memcmp(uri, base.c_str(), uri_len) == 0 )
+ 			 || ( uri_len  > base.size() && memcmp(uri, base.c_str(), base.size()) == 0
+@@ -155,13 +158,15 @@
+ 				baseURIKnown = true;
+ 				baseURI = base.c_str();
+ 				appType = RAILS;
++				this->bConfig = bc;
+ 				return baseURI;
+ 			}
+ 		}
+ 		
+ 		UPDATE_TRACE_POINT();
+ 		for (it = config->rackBaseURIs.begin(); it != config->rackBaseURIs.end(); it++) {
+-			const string &base(*it);
++			BaseURIConfig * bc = (*it);
++			const string base = bc->baseURI;
+ 			if (  base == "/"
+ 			 || ( uri_len == base.size() && memcmp(uri, base.c_str(), uri_len) == 0 )
+ 			 || ( uri_len  > base.size() && memcmp(uri, base.c_str(), base.size()) == 0
+@@ -169,6 +174,7 @@
+ 				baseURIKnown = true;
+ 				baseURI = base.c_str();
+ 				appType = RACK;
++				this->bConfig = bc;
+ 				return baseURI;
+ 			}
+ 		}
+@@ -213,26 +219,14 @@
+ 			return "";
+ 		}
+ 		
+-		const char *docRoot = ap_document_root(r);
+-		size_t len = strlen(docRoot);
+-		if (len > 0) {
+-			string path;
+-			if (docRoot[len - 1] == '/') {
+-				path.assign(docRoot, len - 1);
+-			} else {
+-				path.assign(docRoot, len);
+-			}
+-			if (strcmp(baseURI, "/") != 0) {
+-				/* Application is deployed in a sub-URI.
+-				 * This is probably a symlink, so let's resolve it.
+-				 */
+-				path.append(baseURI);
+-				path = resolveSymlink(path);
+-			}
+-			return path;
+-		} else {
+-			return "";
++		if (this->bConfig->publicDirectory.empty ()) {
++			request_rec *sub_req;
++			sub_req = ap_sub_req_lookup_uri(baseURI, r, NULL);
++
++			this->bConfig->publicDirectory = resolveSymlink(sub_req->filename);
+ 		}
++
++		return this->bConfig->publicDirectory;
+ 	}
+ 	
+ 	/**

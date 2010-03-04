@@ -19,6 +19,7 @@ Group:		Networking/Daemons/HTTP
 Source0:	http://rubygems.org/downloads/passenger-%{version}.gem
 # Source0-md5:	c116ed533ef00eccaffb5a3568cdfd23
 Source1:	%{name}.conf
+Patch0:		%{name}-alias+public.patch
 URL:		http://www.modrails.com
 BuildRequires:	apache-base >= 2.0.55-1
 BuildRequires:	apache-devel >= 2.0.55-1
@@ -67,6 +68,7 @@ Dokumentacji w formacie ri dla %{pkgname}.
 %setup -q -c
 %{__tar} xf %{SOURCE0} -O data.tar.gz | %{__tar} xz
 find -newer README -o -print | xargs touch --reference %{SOURCE0}
+%patch0 -p0
 
 # TODO : ugly metod - but works
 %{__sed} -i 's/CXXFLAGS = "/CXXFLAGS = "`pkg-config --cflags apr-util-1`/ ' Rakefile
