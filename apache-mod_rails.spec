@@ -2,6 +2,7 @@
 # TODO:
 # - separate -devel with ExtUtils::Embed and friends?
 # - how to pass CXXFLAGS to Rakefile?
+# - pass %{__cxx}
 
 %define		apxs		/usr/sbin/apxs
 %define		mod_name	rails
@@ -25,11 +26,13 @@ BuildRequires:	apache-base >= 2.0.55-1
 BuildRequires:	apache-devel >= 2.0.55-1
 BuildRequires:	apache-tools >= 2.0.55-1
 BuildRequires:	apr-util-devel >= 1:1.0.0
+BuildRequires:	libstdc++-devel
 BuildRequires:	pkgconfig
+BuildRequires:	rpm-pythonprov
 BuildRequires:	rpmbuild(macros) >= 1.268
-BuildRequires:	ruby-rubygems
 BuildRequires:	ruby-devel
 BuildRequires:	ruby-rake
+BuildRequires:	ruby-rubygems
 BuildRequires:	sed >= 4.0
 Provides:	apache(mod_rails)
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
