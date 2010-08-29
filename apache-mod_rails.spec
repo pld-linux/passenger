@@ -13,14 +13,15 @@
 
 Summary:	A module to bridge Ruby on Rails to Apache
 Name:		apache-mod_rails
-Version:	2.2.10
+Version:	2.2.15
 Release:	1
 License:	Apache
 Group:		Networking/Daemons/HTTP
 Source0:	http://rubygems.org/downloads/passenger-%{version}.gem
-# Source0-md5:	c116ed533ef00eccaffb5a3568cdfd23
+# Source0-md5:	fd0e1a0ebcf97af7e238c405a6b70235
 Source1:	%{name}.conf
 Patch0:		%{name}-alias+public.patch
+Patch1:		%{name}-nogems.patch
 URL:		http://www.modrails.com
 BuildRequires:	apache-base >= 2.0.55-1
 BuildRequires:	apache-devel >= 2.0.55-1
@@ -31,8 +32,7 @@ BuildRequires:	pkgconfig
 BuildRequires:	rpm-pythonprov
 BuildRequires:	rpmbuild(macros) >= 1.268
 BuildRequires:	ruby-devel
-BuildRequires:	ruby-rake
-BuildRequires:	ruby-rubygems
+BuildRequires:	rake >= 0.8.0
 BuildRequires:	sed >= 4.0
 Provides:	apache(mod_rails)
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -72,6 +72,7 @@ Dokumentacji w formacie ri dla %{pkgname}.
 %{__tar} xf %{SOURCE0} -O data.tar.gz | %{__tar} xz
 find -newer README -o -print | xargs touch --reference %{SOURCE0}
 %patch0 -p0
+%patch1 -p1
 
 # TODO : ugly metod - but works
 %{__sed} -i 's/CXXFLAGS = "/CXXFLAGS = "`pkg-config --cflags apr-util-1`/ ' Rakefile
