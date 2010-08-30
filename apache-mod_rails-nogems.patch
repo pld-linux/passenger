@@ -1,6 +1,6 @@
 diff -ur apache-mod_rails-2.2.15-o/Rakefile apache-mod_rails-2.2.15/Rakefile
 --- apache-mod_rails-2.2.15-o/Rakefile	2010-08-28 23:04:20.000000000 -0600
-+++ apache-mod_rails-2.2.15/Rakefile	2010-08-28 23:05:31.000000000 -0600
++++ apache-mod_rails-2.2.15/Rakefile	2010-08-30 12:29:27.000000000 -0600
 @@ -18,10 +18,8 @@
  
  $LOAD_PATH.unshift("#{File.dirname(__FILE__)}/lib")
@@ -149,3 +149,118 @@ diff -ur apache-mod_rails-2.2.15-o/Rakefile apache-mod_rails-2.2.15/Rakefile
  ##### Misc
  
  desc "Run 'sloccount' to see how much code Passenger has"
+diff -ur apache-mod_rails-2.2.15-o/lib/phusion_passenger/application.rb apache-mod_rails-2.2.15/lib/phusion_passenger/application.rb
+--- apache-mod_rails-2.2.15-o/lib/phusion_passenger/application.rb	2010-06-24 06:23:06.000000000 -0600
++++ apache-mod_rails-2.2.15/lib/phusion_passenger/application.rb	2010-08-30 12:29:27.000000000 -0600
+@@ -21,7 +21,10 @@
+ #  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ #  THE SOFTWARE.
+ 
+-require 'rubygems'
++begin
++  require 'rubygems'
++rescue LoadError
++end
+ require 'phusion_passenger/exceptions'
+ module PhusionPassenger
+ 
+Only in apache-mod_rails-2.2.15/lib/phusion_passenger: platform_info.rb~
+diff -ur apache-mod_rails-2.2.15-o/lib/phusion_passenger/rack/application_spawner.rb apache-mod_rails-2.2.15/lib/phusion_passenger/rack/application_spawner.rb
+--- apache-mod_rails-2.2.15-o/lib/phusion_passenger/rack/application_spawner.rb	2010-06-24 06:23:06.000000000 -0600
++++ apache-mod_rails-2.2.15/lib/phusion_passenger/rack/application_spawner.rb	2010-08-30 12:29:51.000000000 -0600
+@@ -101,7 +101,7 @@
+ 			# Make sure RubyGems uses any new environment variable values
+ 			# that have been set now (e.g. $HOME, $GEM_HOME, etc) and that
+ 			# it is able to detect newly installed gems.
+-			Gem.clear_paths
++			Gem.clear_paths if defined? Gem
+ 			setup_bundler_support
+ 			app = load_rack_app
+ 		end
+Only in apache-mod_rails-2.2.15/lib/phusion_passenger/rack: application_spawner.rb~
+diff -ur apache-mod_rails-2.2.15-o/lib/phusion_passenger/railz/application_spawner.rb apache-mod_rails-2.2.15/lib/phusion_passenger/railz/application_spawner.rb
+--- apache-mod_rails-2.2.15-o/lib/phusion_passenger/railz/application_spawner.rb	2010-06-24 06:23:06.000000000 -0600
++++ apache-mod_rails-2.2.15/lib/phusion_passenger/railz/application_spawner.rb	2010-08-30 12:32:04.000000000 -0600
+@@ -21,7 +21,10 @@
+ #  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ #  THE SOFTWARE.
+ 
+-require 'rubygems'
++begin
++  require 'rubygems'
++rescue LoadError
++end
+ require 'socket'
+ require 'etc'
+ require 'fcntl'
+@@ -173,7 +176,7 @@
+ 					# Make sure RubyGems uses any new environment variable values
+ 					# that have been set now (e.g. $HOME, $GEM_HOME, etc) and that
+ 					# it is able to detect newly installed gems.
+-					Gem.clear_paths
++					Gem.clear_paths if defined? Gem
+ 					setup_bundler_support
+ 					
+ 					require File.expand_path('config/environment')
+@@ -262,7 +265,7 @@
+ 			# Make sure RubyGems uses any new environment variable values
+ 			# that have been set now (e.g. $HOME, $GEM_HOME, etc) and that
+ 			# it is able to detect newly installed gems.
+-			Gem.clear_paths
++			Gem.clear_paths if defined? Gem
+ 			setup_bundler_support
+ 			preload_application
+ 		end
+Only in apache-mod_rails-2.2.15/lib/phusion_passenger/railz: application_spawner.rb~
+diff -ur apache-mod_rails-2.2.15-o/lib/phusion_passenger/railz/framework_spawner.rb apache-mod_rails-2.2.15/lib/phusion_passenger/railz/framework_spawner.rb
+--- apache-mod_rails-2.2.15-o/lib/phusion_passenger/railz/framework_spawner.rb	2010-06-24 06:23:06.000000000 -0600
++++ apache-mod_rails-2.2.15/lib/phusion_passenger/railz/framework_spawner.rb	2010-08-30 12:31:50.000000000 -0600
+@@ -21,7 +21,10 @@
+ #  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ #  THE SOFTWARE.
+ 
+-require 'rubygems'
++begin
++  require 'rubygems'
++rescue LoadError
++end
+ require 'phusion_passenger/abstract_server'
+ require 'phusion_passenger/abstract_server_collection'
+ require 'phusion_passenger/railz/application_spawner'
+@@ -299,7 +302,7 @@
+ 					# missing gem. If that's the case then the sysadmin
+ 					# will install probably the gem. So we clear RubyGems's
+ 					# cache so that it can detect new gems.
+-					Gem.clear_paths
++					Gem.clear_paths if defined? Gem
+ 				end
+ 				return
+ 			end
+Only in apache-mod_rails-2.2.15/lib/phusion_passenger/railz: framework_spawner.rb~
+diff -ur apache-mod_rails-2.2.15-o/lib/phusion_passenger/spawn_manager.rb apache-mod_rails-2.2.15/lib/phusion_passenger/spawn_manager.rb
+--- apache-mod_rails-2.2.15-o/lib/phusion_passenger/spawn_manager.rb	2010-06-24 06:23:06.000000000 -0600
++++ apache-mod_rails-2.2.15/lib/phusion_passenger/spawn_manager.rb	2010-08-30 12:29:27.000000000 -0600
+@@ -292,7 +292,7 @@
+ 				# missing gem. If that's the case then the sysadmin
+ 				# will install probably the gem. So we clear RubyGems's
+ 				# cache so that it can detect new gems.
+-				Gem.clear_paths
++				Gem.clear_paths if defined? Gem
+ 				send_error_page(client, 'load_error', :error => e, :app_root => app_root,
+ 					:app_name => app_name(app_type))
+ 			elsif e.child_exception.is_a?(SystemExit)
+diff -ur apache-mod_rails-2.2.15-o/lib/phusion_passenger/utils.rb apache-mod_rails-2.2.15/lib/phusion_passenger/utils.rb
+--- apache-mod_rails-2.2.15-o/lib/phusion_passenger/utils.rb	2010-06-24 06:23:06.000000000 -0600
++++ apache-mod_rails-2.2.15/lib/phusion_passenger/utils.rb	2010-08-30 12:29:27.000000000 -0600
+@@ -22,7 +22,10 @@
+ #  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ #  THE SOFTWARE.
+ 
+-require 'rubygems'
++begin
++  require 'rubygems'
++rescue LoadError
++end
+ require 'thread'
+ if (!defined?(RUBY_ENGINE) || RUBY_ENGINE == "ruby") && RUBY_VERSION < "1.8.7"
+ 	require 'fastthread'
