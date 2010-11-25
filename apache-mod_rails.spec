@@ -78,7 +78,7 @@ find -newer README -o -print | xargs touch --reference %{SOURCE0}
 
 %{__sed} -i -e 's/rd.template/# rd.template/' Rakefile
 
-%{__sed} -i -e 's!/usr/lib!%{_libdir}!g' ext/common/ResourceLocator.h
+%{__sed} -i -e 's!/usr/lib/!%{_libdir}/!g' ext/common/ResourceLocator.h
 
 %build
 
