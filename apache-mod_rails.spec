@@ -13,20 +13,20 @@
 
 Summary:	A module to bridge Ruby on Rails to Apache
 Name:		apache-mod_rails
-Version:	2.2.15
+Version:	3.0.0
 Release:	1
 License:	Apache
 Group:		Networking/Daemons/HTTP
 Source0:	http://rubygems.org/downloads/passenger-%{version}.gem
-# Source0-md5:	fd0e1a0ebcf97af7e238c405a6b70235
+# Source0-md5:	1135431e5e655fb1e1173757827b0d9d
 Source1:	%{name}.conf
-Patch0:		%{name}-alias+public.patch
 Patch1:		%{name}-nogems.patch
 URL:		http://www.modrails.com
 BuildRequires:	apache-base >= 2.0.55-1
 BuildRequires:	apache-devel >= 2.0.55-1
 BuildRequires:	apache-tools >= 2.0.55-1
 BuildRequires:	apr-util-devel >= 1:1.0.0
+BuildRequires:	curl-devel
 BuildRequires:	libstdc++-devel
 BuildRequires:	pkgconfig
 BuildRequires:	rpm-pythonprov
@@ -71,37 +71,49 @@ Dokumentacji w formacie ri dla %{pkgname}.
 %setup -q -c
 %{__tar} xf %{SOURCE0} -O data.tar.gz | %{__tar} xz
 find -newer README -o -print | xargs touch --reference %{SOURCE0}
-%patch0 -p0
 %patch1 -p1
 
-# TODO : ugly metod - but works
+# TODO : ugly method - but works
 %{__sed} -i 's/CXXFLAGS = "/CXXFLAGS = "`pkg-config --cflags apr-util-1`/ ' Rakefile
 
 %{__sed} -i -e 's/rd.template/# rd.template/' Rakefile
 
-%{__sed} -i -e 's|ext/apache2/ApplicationPoolServerExecutable|%{apachelibdir2}/ApplicationPoolServerExecutable|g' ext/common/Utils.cpp
+%{__sed} -i -e 's!/usr/lib!%{_libdir}!g' ext/common/ResourceLocator.h
 
 %build
-APXS2=%{apxs} rake
+
+APXS2=%{apxs} rake apache2
 APXS2=%{apxs} rake doc
 
+cd ext/ruby
+ruby extconf.rb
+%{__make}
+cd ../..
+
 rdoc --ri --op ri lib misc ext
-rm -r ri/{ConditionVariable,Exception,GC,IO,Mysql,Object,PlatformInfo,Rake*,Signal}
+rm -r ri/{ConditionVariable,Exception,GC,IO,Mysql,Object,Signal}
 rm ri/created.rid
 
 %install
 rm -rf $RPM_BUILD_ROOT
 install -d $RPM_BUILD_ROOT{%{apachelibdir},%{apacheconfdir},%{_mandir}/man{1,8}} \
 	$RPM_BUILD_ROOT{%{ruby_rubylibdir},%{ruby_ridir},%{ruby_rdocdir}} \
-	$RPM_BUILD_ROOT{%{ruby_archdir}/phusion_passenger,%{_bindir}}
+	$RPM_BUILD_ROOT%{_bindir} \
+	$RPM_BUILD_ROOT%{ruby_archdir} \
+	$RPM_BUILD_ROOT%{_libdir}/phusion-passenger/agents/apache2 \
+	$RPM_BUILD_ROOT%{_datadir}/phusion-passenger/helper-scripts
 
 install ext/apache2/mod_passenger.so $RPM_BUILD_ROOT%{apachelibdir}
-install ext/apache2/ApplicationPoolServerExecutable $RPM_BUILD_ROOT%{apachelibdir}
 
-install ext/phusion_passenger/native_support.so $RPM_BUILD_ROOT%{ruby_archdir}/phusion_passenger
+install ext/ruby/passenger_native_support.so $RPM_BUILD_ROOT%{ruby_archdir}
 
-install bin/passenger-{config,make-enterprisey,memory-stats,spawn-server,status,stress-test} \
+install bin/passenger-{config,make-enterprisey,memory-stats,status,stress-test} bin/passenger \
 	$RPM_BUILD_ROOT%{_bindir}
+
+install agents/PassengerLoggingAgent agents/PassengerWatchdog $RPM_BUILD_ROOT%{_libdir}/phusion-passenger/agents
+install agents/apache2/PassengerHelperAgent $RPM_BUILD_ROOT%{_libdir}/phusion-passenger/agents/apache2
+
+install helper-scripts/* $RPM_BUILD_ROOT%{_datadir}/phusion-passenger/helper-scripts
 
 cp -a lib/* $RPM_BUILD_ROOT%{ruby_rubylibdir}
 install man/*.1 $RPM_BUILD_ROOT%{_mandir}/man1
@@ -129,9 +141,18 @@ fi
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{apacheconfdir}/*.conf
 %attr(755,root,root) %{apachelibdir}/*
 %attr(755,root,root) %{_bindir}/passenger-*
+%attr(755,root,root) %{_bindir}/passenger*
+%attr(755,root,root) %{ruby_archdir}/*.so
+%dir %{_libdir}/phusion-passenger
+%dir %{_libdir}/phusion-passenger/agents
+%attr(755,root,root) %{_libdir}/phusion-passenger/agents/Passenger*
+%dir %{_libdir}/phusion-passenger/agents/apache2
+%attr(755,root,root) %{_libdir}/phusion-passenger/agents/apache2/Passenger*
 %{ruby_rubylibdir}/phusion_passenger
-%dir %{ruby_archdir}/phusion_passenger
-%attr(755,root,root) %{ruby_archdir}/phusion_passenger/*.so
+%{ruby_rubylibdir}/phusion_passenger.rb
+%dir %{_datadir}/phusion-passenger
+%dir %{_datadir}/phusion-passenger/helper-scripts
+%attr(755,root,root) %{_datadir}/phusion-passenger/helper-scripts/*
 %{_mandir}/man1/*
 %{_mandir}/man8/*
 
