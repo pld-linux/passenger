@@ -32,7 +32,7 @@ BuildRequires:	pkgconfig
 BuildRequires:	rpm-pythonprov
 BuildRequires:	rpmbuild(macros) >= 1.268
 BuildRequires:	ruby-devel
-BuildRequires:	rake >= 0.8.0
+BuildRequires:	ruby-rake >= 0.8.0
 BuildRequires:	sed >= 4.0
 Provides:	apache(mod_rails)
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -83,7 +83,7 @@ find -newer README -o -print | xargs touch --reference %{SOURCE0}
 %build
 
 APXS2=%{apxs} rake apache2
-APXS2=%{apxs} rake doc
+#APXS2=%{apxs} rake doc
 
 cd ext/ruby
 ruby extconf.rb
