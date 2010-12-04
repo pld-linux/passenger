@@ -14,13 +14,14 @@
 Summary:	A module to bridge Ruby on Rails to Apache
 Name:		apache-mod_rails
 Version:	3.0.0
-Release:	1
+Release:	1.1
 License:	Apache
 Group:		Networking/Daemons/HTTP
 Source0:	http://rubygems.org/downloads/passenger-%{version}.gem
 # Source0-md5:	1135431e5e655fb1e1173757827b0d9d
 Source1:	%{name}.conf
-Patch1:		%{name}-nogems.patch
+Patch0:		%{name}-nogems.patch
+Patch1:		%{name}-graceful.patch
 URL:		http://www.modrails.com
 BuildRequires:	apache-base >= 2.0.55-1
 BuildRequires:	apache-devel >= 2.0.55-1
@@ -71,6 +72,7 @@ Dokumentacji w formacie ri dla %{pkgname}.
 %setup -q -c
 %{__tar} xf %{SOURCE0} -O data.tar.gz | %{__tar} xz
 find -newer README -o -print | xargs touch --reference %{SOURCE0}
+%patch0 -p1
 %patch1 -p1
 
 # TODO : ugly method - but works
