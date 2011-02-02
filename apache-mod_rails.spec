@@ -14,7 +14,7 @@
 Summary:	A module to bridge Ruby on Rails to Apache
 Name:		apache-mod_rails
 Version:	3.0.0
-Release:	2
+Release:	3
 License:	Apache
 Group:		Networking/Daemons/HTTP
 Source0:	http://rubygems.org/downloads/passenger-%{version}.gem
@@ -42,31 +42,31 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 Phusion Passenger — a.k.a. mod_rails — makes deployment of
 applications built on the revolutionary Ruby on Rails web framework a
 breeze. It follows the usual Ruby on Rails conventions, such as
-“Don’t-Repeat-Yourself”.
+"Don’t-Repeat-Yourself".
 
 %package rdoc
-Summary:	HTML documentation for %{pkgname}
-Summary(pl.UTF-8):	Dokumentacja w formacie HTML dla %{pkgname}
+Summary:	HTML documentation for Apache mod_rails
+Summary(pl.UTF-8):	Dokumentacja w formacie HTML dla Apache mod_rails
 Group:		Documentation
 Requires:	ruby >= 1:1.8.7-4
 
 %description rdoc
-HTML documentation for %{pkgname}.
+HTML documentation for Apache mod_rails.
 
 %description rdoc -l pl.UTF-8
-Dokumentacja w formacie HTML dla %{pkgname}.
+Dokumentacja w formacie HTML dla Apache mod_rails.
 
 %package ri
-Summary:	ri documentation for %{pkgname}
-Summary(pl.UTF-8):	Dokumentacja w formacie ri dla %{pkgname}
+Summary:	ri documentation for Apache mod_rails
+Summary(pl.UTF-8):	Dokumentacja w formacie ri dla Apache mod_rails
 Group:		Documentation
 Requires:	ruby
 
 %description ri
-ri documentation for %{pkgname}.
+ri documentation for Apache mod_rails.
 
 %description ri -l pl.UTF-8
-Dokumentacji w formacie ri dla %{pkgname}.
+Dokumentacji w formacie ri dla Apache mod_rails.
 
 %prep
 %setup -q -c
