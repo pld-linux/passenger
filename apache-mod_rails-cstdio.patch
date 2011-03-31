@@ -1,0 +1,18 @@
+commit f231bf98b2f67b4b0adb0d57923a9ffbdd94008a
+Author: Hongli Lai (Phusion) <hongli@phusion.nl>
+Date:   Fri Mar 11 16:47:03 2011 +0100
+
+    Fix compilation problem.
+
+diff --git a/ext/common/LoggingAgent/FilterSupport.h b/ext/common/LoggingAgent/FilterSupport.h
+index 6c5761c..e513be4 100644
+--- a/ext/common/LoggingAgent/FilterSupport.h
++++ b/ext/common/LoggingAgent/FilterSupport.h
+@@ -34,6 +34,7 @@
+ #include <string>
+ #include <set>
+ #include <regex.h>
++#include <cstdio>
+ #include <cstring>
+ 
+ #include <StaticString.h>
