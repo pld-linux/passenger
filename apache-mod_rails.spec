@@ -1,8 +1,6 @@
 #
 # TODO:
 # - separate -devel with ExtUtils::Embed and friends?
-# - how to pass CXXFLAGS to Rakefile?
-# - pass %{__cxx}
 
 %define		apxs		/usr/sbin/apxs
 %define		mod_name	rails
@@ -13,28 +11,33 @@
 
 Summary:	A module to bridge Ruby on Rails to Apache
 Name:		apache-mod_rails
-Version:	3.0.0
-Release:	3
+Version:	3.0.5
+Release:	0.1
 License:	Apache
 Group:		Networking/Daemons/HTTP
 Source0:	http://rubygems.org/downloads/passenger-%{version}.gem
-# Source0-md5:	1135431e5e655fb1e1173757827b0d9d
+# Source0-md5:	1cbdd6bf0603658c089c74e7cc3d1b16
 Source1:	%{name}.conf
 Patch0:		%{name}-nogems.patch
-Patch1:		%{name}-graceful.patch
+Patch1:		%{name}-alias+public.patch
+Patch2:		%{name}-cstdio.patch
+Patch3:		%{name}-build.patch
 URL:		http://www.modrails.com
 BuildRequires:	apache-base >= 2.0.55-1
 BuildRequires:	apache-devel >= 2.0.55-1
 BuildRequires:	apache-tools >= 2.0.55-1
+BuildRequires:	apr-devel >= 1:1.0.0
 BuildRequires:	apr-util-devel >= 1:1.0.0
 BuildRequires:	curl-devel
 BuildRequires:	libstdc++-devel
+BuildRequires:	openssl-devel
 BuildRequires:	pkgconfig
 BuildRequires:	rpm-pythonprov
 BuildRequires:	rpmbuild(macros) >= 1.268
 BuildRequires:	ruby-devel
 BuildRequires:	ruby-rake >= 0.8.0
 BuildRequires:	sed >= 4.0
+BuildRequires:	zlib-devel
 Provides:	apache(mod_rails)
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
@@ -73,28 +76,30 @@ Dokumentacji w formacie ri dla Apache mod_rails.
 %{__tar} xf %{SOURCE0} -O data.tar.gz | %{__tar} xz
 find -newer README -o -print | xargs touch --reference %{SOURCE0}
 %patch0 -p1
-%patch1 -p1
-
-# TODO : ugly method - but works
-%{__sed} -i 's/CXXFLAGS = "/CXXFLAGS = "`pkg-config --cflags apr-util-1`/ ' Rakefile
-
-%{__sed} -i -e 's/rd.template/# rd.template/' Rakefile
+%patch1 -p0
+%patch2 -p1
+%patch3 -p1
 
 %{__sed} -i -e 's!/usr/lib/!%{_libdir}/!g' ext/common/ResourceLocator.h
 
 %build
+(cd ext/libev ; %{__autoconf})
 
-APXS2=%{apxs} rake apache2
-#APXS2=%{apxs} rake doc
+rake apache2 \
+	RELEASE=yes \
+	OPTIMIZE=yes \
+	APXS2=%{apxs} \
+	CXXFLAGS="%{rpmcxxflags}" \
+	CFLAGS="%{rpmcflags}" \
+	CXX=%{__cxx} \
+	CC=%{__cc}
 
-cd ext/ruby
-ruby extconf.rb
-%{__make}
-cd ../..
+# No need to rebuild rdoc/txt/html
+#rake doc
 
-rdoc --ri --op ri lib misc ext
-rm -r ri/{ConditionVariable,Exception,GC,IO,Mysql,Object,Signal}
-rm ri/created.rid
+rdoc --ri --op ri lib ext/ruby
+%{__rm} -r ri/{ConditionVariable,Exception,GC,IO,Object,Process,Signal}
+%{__rm} ri/{cache.ri,created.rid}
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -107,9 +112,9 @@ install -d $RPM_BUILD_ROOT{%{apachelibdir},%{apacheconfdir},%{_mandir}/man{1,8}}
 
 install ext/apache2/mod_passenger.so $RPM_BUILD_ROOT%{apachelibdir}
 
-install ext/ruby/passenger_native_support.so $RPM_BUILD_ROOT%{ruby_archdir}
+install ext/ruby/ruby-*/passenger_native_support.so $RPM_BUILD_ROOT%{ruby_archdir}
 
-install bin/passenger-{config,make-enterprisey,memory-stats,status,stress-test} bin/passenger \
+install bin/passenger-{config,make-enterprisey,memory-stats,status} bin/passenger \
 	$RPM_BUILD_ROOT%{_bindir}
 
 install agents/PassengerLoggingAgent agents/PassengerWatchdog $RPM_BUILD_ROOT%{_libdir}/phusion-passenger/agents
@@ -139,7 +144,8 @@ fi
 
 %files
 %defattr(644,root,root,755)
-%doc INSTALL README doc/*.txt
+%doc INSTALL README doc/{A*.txt,Security*.txt,*Apache.txt}
+%doc doc/{A*.html,Security*.html,*Apache.html,images}
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{apacheconfdir}/*.conf
 %attr(755,root,root) %{apachelibdir}/*
 %attr(755,root,root) %{_bindir}/passenger-*
