@@ -92,8 +92,7 @@ rake apache2 \
 	CXX=%{__cxx} \
 	CC=%{__cc}
 
-# No need to rebuild rdoc/txt/html
-#rake doc
+rake doc
 
 rdoc --ri --op ri lib ext/ruby
 %{__rm} -r ri/{ConditionVariable,Exception,GC,IO,Object,Process,Signal}
