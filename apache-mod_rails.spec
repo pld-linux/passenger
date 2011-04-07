@@ -20,7 +20,7 @@ Source0:	http://rubygems.org/downloads/passenger-%{version}.gem
 Source1:	%{name}.conf
 Patch0:		%{name}-nogems.patch
 Patch1:		%{name}-alias+public.patch
-Patch3:		%{name}-build.patch
+Patch2:		%{name}-build.patch
 URL:		http://www.modrails.com
 BuildRequires:	apache-base >= 2.0.55-1
 BuildRequires:	apache-devel >= 2.0.55-1
@@ -76,7 +76,7 @@ Dokumentacji w formacie ri dla Apache mod_rails.
 find -newer README -o -print0 | xargs -0 touch --reference %{SOURCE0}
 %patch0 -p1
 %patch1 -p0
-%patch3 -p1
+%patch2 -p1
 
 %{__sed} -i -e 's!/usr/lib/!%{_libdir}/!g' ext/common/ResourceLocator.h
 
