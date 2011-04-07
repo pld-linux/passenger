@@ -11,16 +11,15 @@
 
 Summary:	A module to bridge Ruby on Rails to Apache
 Name:		apache-mod_rails
-Version:	3.0.5
-Release:	1
+Version:	3.0.6
+Release:	0.1
 License:	Apache
 Group:		Networking/Daemons/HTTP
 Source0:	http://rubygems.org/downloads/passenger-%{version}.gem
-# Source0-md5:	1cbdd6bf0603658c089c74e7cc3d1b16
+# Source0-md5:	2110a38db4b91603eca0616b9ce7bb5f
 Source1:	%{name}.conf
 Patch0:		%{name}-nogems.patch
 Patch1:		%{name}-alias+public.patch
-Patch2:		%{name}-cstdio.patch
 Patch3:		%{name}-build.patch
 URL:		http://www.modrails.com
 BuildRequires:	apache-base >= 2.0.55-1
@@ -74,10 +73,9 @@ Dokumentacji w formacie ri dla Apache mod_rails.
 %prep
 %setup -q -c
 %{__tar} xf %{SOURCE0} -O data.tar.gz | %{__tar} xz
-find -newer README -o -print | xargs touch --reference %{SOURCE0}
+find -newer README -o -print0 | xargs -0 touch --reference %{SOURCE0}
 %patch0 -p1
 %patch1 -p0
-%patch2 -p1
 %patch3 -p1
 
 %{__sed} -i -e 's!/usr/lib/!%{_libdir}/!g' ext/common/ResourceLocator.h
