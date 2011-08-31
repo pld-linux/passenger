@@ -12,7 +12,7 @@
 Summary:	A module to bridge Ruby on Rails to Apache
 Name:		apache-mod_rails
 Version:	3.0.6
-Release:	2
+Release:	3
 License:	Apache
 Group:		Networking/Daemons/HTTP
 Source0:	http://rubygems.org/downloads/passenger-%{version}.gem
