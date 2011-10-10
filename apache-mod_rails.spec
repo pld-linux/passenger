@@ -114,6 +114,14 @@ cp -a ri/* $RPM_BUILD_ROOT%{ruby_ridir}
 
 install %{SOURCE1} $RPM_BUILD_ROOT%{apacheconfdir}/75_mod_rails.conf
 
+%{__sed} -i -e 's|#!/usr/bin/env ruby|#!%{_bindir}/ruby|' \
+	$RPM_BUILD_ROOT%{_bindir}/passenger \
+	$RPM_BUILD_ROOT%{_bindir}/passenger-* \
+	$RPM_BUILD_ROOT%{_datadir}/phusion-passenger/helper-scripts/*
+
+%{__sed} -i -e 's|#!/usr/bin/env python|#!%{_bindir}/python|' \
+	$RPM_BUILD_ROOT%{ruby_rubylibdir}/phusion_passenger/wsgi/request_handler.py
+
 %clean
 rm -rf $RPM_BUILD_ROOT
 
@@ -131,8 +139,8 @@ fi
 %doc doc/{A*.html,Security*.html,*Apache.html,images}
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{apacheconfdir}/*.conf
 %attr(755,root,root) %{apachelibdir}/*
+%attr(755,root,root) %{_bindir}/passenger
 %attr(755,root,root) %{_bindir}/passenger-*
-%attr(755,root,root) %{_bindir}/passenger*
 %attr(755,root,root) %{ruby_archdir}/*.so
 %dir %{_libdir}/phusion-passenger
 %dir %{_libdir}/phusion-passenger/agents
