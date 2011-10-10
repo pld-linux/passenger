@@ -11,12 +11,12 @@
 
 Summary:	A module to bridge Ruby on Rails to Apache
 Name:		apache-mod_rails
-Version:	3.0.6
-Release:	3
+Version:	3.0.9
+Release:	1
 License:	Apache
 Group:		Networking/Daemons/HTTP
 Source0:	http://rubygems.org/downloads/passenger-%{version}.gem
-# Source0-md5:	2110a38db4b91603eca0616b9ce7bb5f
+# Source0-md5:	d616c8425071303b983b6c09fea8004a
 Source1:	%{name}.conf
 Patch0:		%{name}-nogems.patch
 Patch1:		%{name}-alias+public.patch
@@ -27,6 +27,7 @@ BuildRequires:	apache-devel >= 2.0.55-1
 BuildRequires:	apache-tools >= 2.0.55-1
 BuildRequires:	apr-devel >= 1:1.0.0
 BuildRequires:	apr-util-devel >= 1:1.0.0
+#BuildRequires:	asciidoc
 BuildRequires:	curl-devel
 BuildRequires:	libstdc++-devel
 BuildRequires:	openssl-devel
@@ -38,6 +39,7 @@ BuildRequires:	ruby-rake >= 0.8.0
 BuildRequires:	sed >= 4.0
 BuildRequires:	zlib-devel
 Provides:	apache(mod_rails)
+Obsoletes:	apache-mod_rails-rdoc
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
 %description
@@ -45,18 +47,6 @@ Phusion Passenger — a.k.a. mod_rails — makes deployment of
 applications built on the revolutionary Ruby on Rails web framework a
 breeze. It follows the usual Ruby on Rails conventions, such as
 "Don’t-Repeat-Yourself".
-
-%package rdoc
-Summary:	HTML documentation for Apache mod_rails
-Summary(pl.UTF-8):	Dokumentacja w formacie HTML dla Apache mod_rails
-Group:		Documentation
-Requires:	ruby >= 1:1.8.7-4
-
-%description rdoc
-HTML documentation for Apache mod_rails.
-
-%description rdoc -l pl.UTF-8
-Dokumentacja w formacie HTML dla Apache mod_rails.
 
 %package ri
 Summary:	ri documentation for Apache mod_rails
@@ -92,8 +82,6 @@ rake apache2 \
 	CXX=%{__cxx} \
 	CC=%{__cc}
 
-rake doc
-
 rdoc --ri --op ri lib ext/ruby
 %{__rm} -r ri/{ConditionVariable,Exception,GC,IO,Object,Process,Signal}
 %{__rm} ri/{cache.ri,created.rid}
@@ -101,9 +89,8 @@ rdoc --ri --op ri lib ext/ruby
 %install
 rm -rf $RPM_BUILD_ROOT
 install -d $RPM_BUILD_ROOT{%{apachelibdir},%{apacheconfdir},%{_mandir}/man{1,8}} \
-	$RPM_BUILD_ROOT{%{ruby_rubylibdir},%{ruby_ridir},%{ruby_rdocdir}} \
+	$RPM_BUILD_ROOT{%{ruby_rubylibdir},%{ruby_archdir},%{ruby_ridir}} \
 	$RPM_BUILD_ROOT%{_bindir} \
-	$RPM_BUILD_ROOT%{ruby_archdir} \
 	$RPM_BUILD_ROOT%{_libdir}/phusion-passenger/agents/apache2 \
 	$RPM_BUILD_ROOT%{_datadir}/phusion-passenger/helper-scripts
 
@@ -123,7 +110,6 @@ cp -a lib/* $RPM_BUILD_ROOT%{ruby_rubylibdir}
 install man/*.1 $RPM_BUILD_ROOT%{_mandir}/man1
 install man/*.8 $RPM_BUILD_ROOT%{_mandir}/man8
 
-cp -a doc/rdoc $RPM_BUILD_ROOT%{ruby_rdocdir}/%{name}-%{version}
 cp -a ri/* $RPM_BUILD_ROOT%{ruby_ridir}
 
 install %{SOURCE1} $RPM_BUILD_ROOT%{apacheconfdir}/75_mod_rails.conf
@@ -160,10 +146,6 @@ fi
 %attr(755,root,root) %{_datadir}/phusion-passenger/helper-scripts/*
 %{_mandir}/man1/*
 %{_mandir}/man8/*
-
-%files rdoc
-%defattr(644,root,root,755)
-%{ruby_rdocdir}/%{name}-%{version}
 
 %files ri
 %defattr(644,root,root,755)

@@ -21,9 +21,9 @@ diff -ur apache-mod_rails-3.0.0-o//build/basics.rb apache-mod_rails-3.0.0/build/
  require 'phusion_passenger'
  require 'phusion_passenger/packaging'
 @@ -32,8 +31,6 @@
+ include PhusionPassenger
  include PhusionPassenger::PlatformInfo
  
- require 'build/rdoctask'
 -require 'build/packagetask'
 -require 'build/gempackagetask'
  require 'build/rake_extensions'

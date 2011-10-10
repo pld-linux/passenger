@@ -1,10 +1,11 @@
 --- apache-mod_rails-3.0.5/build/config.rb~	2011-03-11 12:11:27.000000000 +0100
 +++ apache-mod_rails-3.0.5/build/config.rb	2011-03-30 22:02:43.754874026 +0200
-@@ -24,8 +24,9 @@
+@@ -24,9 +24,10 @@
  OPTIMIZE = boolean_option("OPTIMIZE")
  CC       = string_option("CC", "gcc")
  CXX      = string_option("CXX", "g++")
 +CXXFLAGS = string_option("CXXFLAGS", "")
+ # TODO: consider -fcommon
  if OPTIMIZE
 -	OPTIMIZATION_FLAGS = "#{PlatformInfo.debugging_cflags} -O2 -DBOOST_DISABLE_ASSERTS".strip
 +	OPTIMIZATION_FLAGS = "#{PlatformInfo.debugging_cflags} -DBOOST_DISABLE_ASSERTS".strip
@@ -15,21 +16,11 @@
  
  # Extra compiler flags that should always be passed to the C/C++ compiler.
  # Should be included last in the command string, even after PlatformInfo.portability_cflags.
--EXTRA_CXXFLAGS = "-Wall #{OPTIMIZATION_FLAGS}".strip
-+EXTRA_CXXFLAGS = "-Wall #{OPTIMIZATION_FLAGS} #{CXXFLAGS}".strip
+-EXTRA_CXXFLAGS = "-Wextra -Wno-unused-parameter -Wno-parentheses -Wpointer-arith -Wwrite-strings -Wno-missing-field-initializers -Wno-long-long #{OPTIMIZATION_FLAGS}".strip
++EXTRA_CXXFLAGS = "-Wextra -Wno-unused-parameter -Wno-parentheses -Wpointer-arith -Wwrite-strings -Wno-missing-field-initializers -Wno-long-long #{OPTIMIZATION_FLAGS} #{CXXFLAGS}".strip
  
  # Extra linker flags that should always be passed to the linker.
  # Should be included last in the command string, even after PlatformInfo.portability_ldflags.
---- apache-mod_rails-3.0.5/build/documentation.rb~	2011-03-11 12:11:27.000000000 +0100
-+++ apache-mod_rails-3.0.5/build/documentation.rb	2011-03-31 11:16:37.399444136 +0200
-@@ -78,7 +78,6 @@
- 		"lib/phusion_passenger/*.rb",
- 		"lib/phusion_passenger/*/*.rb",
- 		"ext/phusion_passenger/*.c")
--	rd.template = "./doc/template/horo"
- 	rd.title = "Passenger Ruby API"
- 	rd.options << "-S" << "-N" << "-p" << "-H"
- end
 --- apache-mod_rails-3.0.5/ext/libev/configure.ac~	2011-03-11 12:11:27.000000000 +0100
 +++ apache-mod_rails-3.0.5/ext/libev/configure.ac	2011-03-31 11:39:27.773936137 +0200
 @@ -8,10 +8,6 @@
