@@ -33,11 +33,12 @@ BuildRequires:	libstdc++-devel
 BuildRequires:	openssl-devel
 BuildRequires:	pkgconfig
 BuildRequires:	rpm-pythonprov
-BuildRequires:	rpmbuild(macros) >= 1.268
+BuildRequires:	rpmbuild(macros) >= 1.559
 BuildRequires:	ruby-devel
 BuildRequires:	ruby-rake >= 0.8.0
 BuildRequires:	sed >= 4.0
 BuildRequires:	zlib-devel
+%requires_ge_to	ruby ruby-devel
 Provides:	apache(mod_rails)
 Obsoletes:	apache-mod_rails-rdoc
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
