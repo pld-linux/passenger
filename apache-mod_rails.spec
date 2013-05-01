@@ -32,7 +32,6 @@ BuildRequires:	ruby-rake >= 0.8.0
 BuildRequires:	ruby-rdoc
 BuildRequires:	sed >= 4.0
 BuildRequires:	zlib-devel
-%requires_ge_to	ruby ruby-devel
 Requires:	apache(modules-api) = %apache_modules_api
 Provides:	apache(mod_rails)
 Obsoletes:	apache-mod_rails-rdoc
