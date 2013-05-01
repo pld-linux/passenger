@@ -13,7 +13,7 @@
 Summary:	A module to bridge Ruby on Rails to Apache
 Name:		apache-mod_rails
 Version:	3.0.19
-Release:	0.1
+Release:	0.2
 # Passenger code uses MIT license.
 # Bundled(Boost) uses Boost Software License
 # BCrypt and Blowfish files use BSD license.
@@ -34,6 +34,7 @@ BuildRequires:	apr-devel >= 1:1.0.0
 BuildRequires:	apr-util-devel >= 1:1.0.0
 #BuildRequires:	asciidoc
 BuildRequires:	curl-devel
+BuildRequires:	libev-devel
 BuildRequires:	libstdc++-devel
 BuildRequires:	openssl-devel
 BuildRequires:	pkgconfig
@@ -72,8 +73,10 @@ Dokumentacji w formacie ri dla Apache mod_rails.
 %patch1 -p0
 %patch2 -p0
 
+# Don't use bundled libev
+rm -r ext/libev
+
 %build
-(cd ext/libev; %{__autoconf})
 
 cat > fake-httpd <<EOF
 #!/bin/sh
@@ -81,6 +84,7 @@ echo Apache/$(rpm -q apache-devel --qf '%{V}')
 EOF
 chmod a+rx fake-httpd
 
+USE_VENDORED_LIBEV=false \
 rake apache2 V=1 \
 	RELEASE=yes \
 	OPTIMIZE=yes \
