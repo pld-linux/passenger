@@ -4,10 +4,6 @@
 
 %define		apxs		/usr/sbin/apxs
 %define		mod_name	rails
-%define		apacheconfdir	%(%{apxs} -q SYSCONFDIR 2>/dev/null)/conf.d
-%define		apachelibdir	%(%{apxs} -q LIBEXECDIR 2>/dev/null)
-%define		apacheprefix	%(%{apxs} -q PREFIX 2>/dev/null)
-%define		apachelibdir2	%(%{apxs} -q LIBEXECDIR 2>/dev/null | %{__sed} 's|%{apacheprefix}||')
 
 %define		gem_name	passenger
 Summary:	A module to bridge Ruby on Rails to Apache
@@ -45,9 +41,13 @@ BuildRequires:	ruby-rake >= 0.8.0
 BuildRequires:	sed >= 4.0
 BuildRequires:	zlib-devel
 %requires_ge_to	ruby ruby-devel
+Requires:	apache(modules-api) = %apache_modules_api
 Provides:	apache(mod_rails)
 Obsoletes:	apache-mod_rails-rdoc
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
+
+%define		_pkglibdir	%(%{apxs} -q LIBEXECDIR 2>/dev/null)
+%define		_sysconfdir	%(%{apxs} -q SYSCONFDIR 2>/dev/null)/conf.d
 
 %description
 Phusion Passenger — a.k.a. mod_rails — makes deployment of
@@ -101,31 +101,23 @@ rdoc --ri --op ri lib ext/ruby
 
 %install
 rm -rf $RPM_BUILD_ROOT
-install -d $RPM_BUILD_ROOT{%{apachelibdir},%{apacheconfdir},%{_mandir}/man{1,8}} \
+install -d $RPM_BUILD_ROOT{%{_pkglibdir},%{_sysconfdir},%{_mandir}/man{1,8}} \
 	$RPM_BUILD_ROOT{%{ruby_rubylibdir},%{ruby_archdir},%{ruby_ridir}} \
 	$RPM_BUILD_ROOT%{_bindir} \
 	$RPM_BUILD_ROOT%{_libdir}/phusion-passenger/agents/apache2 \
 	$RPM_BUILD_ROOT%{_datadir}/phusion-passenger/helper-scripts
 
-install ext/apache2/mod_passenger.so $RPM_BUILD_ROOT%{apachelibdir}
-
-install ext/ruby/ruby-*/passenger_native_support.so $RPM_BUILD_ROOT%{ruby_archdir}
-
-install bin/passenger-{config,memory-stats,status} bin/passenger \
-	$RPM_BUILD_ROOT%{_bindir}
-
-install agents/PassengerLoggingAgent agents/PassengerWatchdog $RPM_BUILD_ROOT%{_libdir}/phusion-passenger/agents
-install agents/apache2/PassengerHelperAgent $RPM_BUILD_ROOT%{_libdir}/phusion-passenger/agents/apache2
-
-install helper-scripts/* $RPM_BUILD_ROOT%{_datadir}/phusion-passenger/helper-scripts
-
+install -p ext/apache2/mod_passenger.so $RPM_BUILD_ROOT%{_pkglibdir}
+install -p ext/ruby/ruby-*/passenger_native_support.so $RPM_BUILD_ROOT%{ruby_archdir}
+install -p bin/passenger-{config,memory-stats,status} bin/passenger $RPM_BUILD_ROOT%{_bindir}
+install -p agents/PassengerLoggingAgent agents/PassengerWatchdog $RPM_BUILD_ROOT%{_libdir}/phusion-passenger/agents
+install -p agents/apache2/PassengerHelperAgent $RPM_BUILD_ROOT%{_libdir}/phusion-passenger/agents/apache2
+install -p helper-scripts/* $RPM_BUILD_ROOT%{_datadir}/phusion-passenger/helper-scripts
 cp -a lib/* $RPM_BUILD_ROOT%{ruby_rubylibdir}
-install man/*.1 $RPM_BUILD_ROOT%{_mandir}/man1
-install man/*.8 $RPM_BUILD_ROOT%{_mandir}/man8
-
+cp -p man/*.1 $RPM_BUILD_ROOT%{_mandir}/man1
+cp -p man/*.8 $RPM_BUILD_ROOT%{_mandir}/man8
 cp -a ri/* $RPM_BUILD_ROOT%{ruby_ridir}
-
-install %{SOURCE1} $RPM_BUILD_ROOT%{apacheconfdir}/75_mod_rails.conf
+cp -p %{SOURCE1} $RPM_BUILD_ROOT%{_sysconfdir}/75_mod_rails.conf
 
 %{__sed} -i -e 's|#!/usr/bin/env ruby|#!%{_bindir}/ruby|' \
 	$RPM_BUILD_ROOT%{_bindir}/passenger \
@@ -151,14 +143,17 @@ fi
 %doc INSTALL README
 #%doc doc/{A*.txt,Security*.txt,*Apache.txt}
 #%doc doc/{A*.html,Security*.html,*Apache.html,images}
-%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{apacheconfdir}/*.conf
-%attr(755,root,root) %{apachelibdir}/*
+%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/*_mod_rails.conf
+%attr(755,root,root) %{_pkglibdir}/mod_passenger.so
 %attr(755,root,root) %{_bindir}/passenger
-%attr(755,root,root) %{_bindir}/passenger-*
-%attr(755,root,root) %{ruby_archdir}/*.so
+%attr(755,root,root) %{_bindir}/passenger-config
+%attr(755,root,root) %{_bindir}/passenger-memory-stats
+%attr(755,root,root) %{_bindir}/passenger-status
+%attr(755,root,root) %{ruby_archdir}/passenger_native_support.so
 %dir %{_libdir}/phusion-passenger
 %dir %{_libdir}/phusion-passenger/agents
-%attr(755,root,root) %{_libdir}/phusion-passenger/agents/Passenger*
+%attr(755,root,root) %{_libdir}/phusion-passenger/agents/PassengerLoggingAgent
+%attr(755,root,root) %{_libdir}/phusion-passenger/agents/PassengerWatchdog
 %dir %{_libdir}/phusion-passenger/agents/apache2
 %attr(755,root,root) %{_libdir}/phusion-passenger/agents/apache2/Passenger*
 %{ruby_rubylibdir}/phusion_passenger
@@ -166,8 +161,10 @@ fi
 %dir %{_datadir}/phusion-passenger
 %dir %{_datadir}/phusion-passenger/helper-scripts
 %attr(755,root,root) %{_datadir}/phusion-passenger/helper-scripts/*
-%{_mandir}/man1/*
-%{_mandir}/man8/*
+%{_mandir}/man1/passenger-config.1*
+%{_mandir}/man1/passenger-stress-test.1*
+%{_mandir}/man8/passenger-memory-stats.8*
+%{_mandir}/man8/passenger-status.8*
 
 %files ri
 %defattr(644,root,root,755)
