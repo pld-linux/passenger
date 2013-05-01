@@ -9,14 +9,19 @@
 %define		apacheprefix	%(%{apxs} -q PREFIX 2>/dev/null)
 %define		apachelibdir2	%(%{apxs} -q LIBEXECDIR 2>/dev/null | %{__sed} 's|%{apacheprefix}||')
 
+%define		gem_name	passenger
 Summary:	A module to bridge Ruby on Rails to Apache
 Name:		apache-mod_rails
-Version:	3.0.11
-Release:	3
-License:	Apache
+Version:	3.0.19
+Release:	0.1
+# Passenger code uses MIT license.
+# Bundled(Boost) uses Boost Software License
+# BCrypt and Blowfish files use BSD license.
+# Documentation is CC-BY-SA
+# See: https://bugzilla.redhat.com/show_bug.cgi?id=470696#c146
+License:	Boost and BSD and BSD with advertising and MIT and zlib
 Group:		Networking/Daemons/HTTP
-Source0:	http://rubygems.org/downloads/passenger-%{version}.gem
-# Source0-md5:	c0cafef2c5ba522310602f451ea4c941
+Source0:	https://github.com/FooBarWidget/passenger/archive/release-%{version}.tar.gz
 Source1:	%{name}.conf
 Patch0:		%{name}-nogems.patch
 Patch1:		%{name}-alias+public.patch
@@ -62,23 +67,28 @@ ri documentation for Apache mod_rails.
 Dokumentacji w formacie ri dla Apache mod_rails.
 
 %prep
-%setup -q -c
-%{__tar} xf %{SOURCE0} -O data.tar.gz | %{__tar} xz
-find -newer README -o -print0 | xargs -0 touch --reference %{SOURCE0}
+%setup -q -n %{gem_name}-release-%{version}
 %patch0 -p1
 %patch1 -p0
-%patch2 -p1
+#%patch2 -p1
 
-%{__sed} -i -e 's!/usr/lib/!%{_libdir}/!g' ext/common/ResourceLocator.h
+%{__sed} -i~ -e 's!/usr/lib/!%{_libdir}/!g' ext/common/ResourceLocator.h
 
 %build
 (cd ext/libev; %{__autoconf})
+
+cat > fake-httpd <<EOF
+#!/bin/sh
+echo Apache/$(rpm -q apache-devel --qf '%{V}')
+EOF
+chmod a+rx fake-httpd
 
 cc="%{__cc}"; cc=${cc#ccache }
 cxx="%{__cxx}"; cxx=${cxx#ccache }
 rake apache2 \
 	RELEASE=yes \
 	OPTIMIZE=yes \
+	HTTPD=${PWD:-$(pwd)/fake-httpd} \
 	APXS2=%{apxs} \
 	CXXFLAGS="%{rpmcxxflags}" \
 	CFLAGS="%{rpmcflags}" \
@@ -101,7 +111,7 @@ install ext/apache2/mod_passenger.so $RPM_BUILD_ROOT%{apachelibdir}
 
 install ext/ruby/ruby-*/passenger_native_support.so $RPM_BUILD_ROOT%{ruby_archdir}
 
-install bin/passenger-{config,make-enterprisey,memory-stats,status} bin/passenger \
+install bin/passenger-{config,memory-stats,status} bin/passenger \
 	$RPM_BUILD_ROOT%{_bindir}
 
 install agents/PassengerLoggingAgent agents/PassengerWatchdog $RPM_BUILD_ROOT%{_libdir}/phusion-passenger/agents
@@ -138,8 +148,9 @@ fi
 
 %files
 %defattr(644,root,root,755)
-%doc INSTALL README doc/{A*.txt,Security*.txt,*Apache.txt}
-%doc doc/{A*.html,Security*.html,*Apache.html,images}
+%doc INSTALL README
+#%doc doc/{A*.txt,Security*.txt,*Apache.txt}
+#%doc doc/{A*.html,Security*.html,*Apache.html,images}
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{apacheconfdir}/*.conf
 %attr(755,root,root) %{apachelibdir}/*
 %attr(755,root,root) %{_bindir}/passenger
