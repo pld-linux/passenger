@@ -81,17 +81,15 @@ echo Apache/$(rpm -q apache-devel --qf '%{V}')
 EOF
 chmod a+rx fake-httpd
 
-cc="%{__cc}"; cc=${cc#ccache }
-cxx="%{__cxx}"; cxx=${cxx#ccache }
-rake apache2 \
+rake apache2 V=1 \
 	RELEASE=yes \
 	OPTIMIZE=yes \
 	HTTPD=${PWD:-$(pwd)/fake-httpd} \
 	APXS2=%{apxs} \
-	CXXFLAGS="%{rpmcxxflags}" \
+	CC="%{__cc}" \
+	CXX="%{__cxx}" \
 	CFLAGS="%{rpmcflags}" \
-	CXX="$cxx" \
-	CC="$cc"
+	CXXFLAGS="%{rpmcxxflags}"
 
 rdoc --ri --op ri lib ext/ruby
 %{__rm} -r ri/{ConditionVariable,Exception,GC,IO,Object,Process,Signal}
