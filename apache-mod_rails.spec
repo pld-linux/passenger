@@ -6,7 +6,7 @@
 Summary:	A module to bridge Ruby on Rails to Apache
 Name:		apache-mod_rails
 Version:	3.0.19
-Release:	0.3
+Release:	0.4
 # Passenger code uses MIT license.
 # Bundled(Boost) uses Boost Software License
 # BCrypt and Blowfish files use BSD license.
@@ -19,10 +19,9 @@ Source1:	%{name}.conf
 Patch0:		%{name}-nogems.patch
 Patch1:		%{name}-alias+public.patch
 Patch2:		passenger_apache_fix_autofoo.patch
+Patch3:		progs.patch
 URL:		http://www.modrails.com/
-BuildRequires:	apache-base >= 2.0.55-1
 BuildRequires:	apache-devel >= 2.0.55-1
-BuildRequires:	apache-tools >= 2.0.55-1
 BuildRequires:	apr-devel >= 1:1.0.0
 BuildRequires:	apr-util-devel >= 1:1.0.0
 #BuildRequires:	asciidoc
@@ -30,11 +29,11 @@ BuildRequires:	curl-devel
 BuildRequires:	libev-devel
 BuildRequires:	libstdc++-devel
 BuildRequires:	openssl-devel
-BuildRequires:	pkgconfig
 BuildRequires:	rpm-pythonprov
 BuildRequires:	rpmbuild(macros) >= 1.559
 BuildRequires:	ruby-devel
 BuildRequires:	ruby-rake >= 0.8.0
+BuildRequires:	ruby-rdoc
 BuildRequires:	sed >= 4.0
 BuildRequires:	zlib-devel
 %requires_ge_to	ruby ruby-devel
@@ -70,24 +69,20 @@ Dokumentacji w formacie ri dla Apache mod_rails.
 %patch0 -p1
 %patch1 -p0
 %patch2 -p0
+%patch3 -p1
 
 # Don't use bundled libev
 rm -r ext/libev
 
 %build
-
-cat > fake-httpd <<EOF
-#!/bin/sh
-echo Apache/$(rpm -q apache-devel --qf '%{V}')
-EOF
-chmod a+rx fake-httpd
-
 USE_VENDORED_LIBEV=false \
 rake apache2 V=1 \
 	RELEASE=yes \
 	OPTIMIZE=yes \
-	HTTPD=${PWD:-$(pwd)/fake-httpd} \
+	APACHECTL=%{_sbindir}/apachectl \
 	APXS2=%{apxs} \
+	HTTPD=foo \
+	HTTPD_VERSION=$(rpm -q apache-devel --qf '%{V}') \
 	CC="%{__cc}" \
 	CXX="%{__cxx}" \
 	CFLAGS="%{rpmcflags}" \
