@@ -2,14 +2,11 @@
 # TODO:
 # - separate -devel with ExtUtils::Embed and friends?
 
-%define		apxs		/usr/sbin/apxs
-%define		mod_name	rails
-
 %define		gem_name	passenger
 Summary:	A module to bridge Ruby on Rails to Apache
 Name:		apache-mod_rails
 Version:	3.0.19
-Release:	0.2
+Release:	0.3
 # Passenger code uses MIT license.
 # Bundled(Boost) uses Boost Software License
 # BCrypt and Blowfish files use BSD license.
@@ -22,7 +19,7 @@ Source1:	%{name}.conf
 Patch0:		%{name}-nogems.patch
 Patch1:		%{name}-alias+public.patch
 Patch2:		passenger_apache_fix_autofoo.patch
-URL:		http://www.modrails.com
+URL:		http://www.modrails.com/
 BuildRequires:	apache-base >= 2.0.55-1
 BuildRequires:	apache-devel >= 2.0.55-1
 BuildRequires:	apache-tools >= 2.0.55-1
@@ -46,6 +43,7 @@ Provides:	apache(mod_rails)
 Obsoletes:	apache-mod_rails-rdoc
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
+%define		apxs		/usr/sbin/apxs
 %define		_pkglibdir	%(%{apxs} -q LIBEXECDIR 2>/dev/null)
 %define		_sysconfdir	%(%{apxs} -q SYSCONFDIR 2>/dev/null)/conf.d
 
@@ -102,18 +100,18 @@ rdoc --ri --op ri lib ext/ruby
 %install
 rm -rf $RPM_BUILD_ROOT
 install -d $RPM_BUILD_ROOT{%{_pkglibdir},%{_sysconfdir},%{_mandir}/man{1,8}} \
-	$RPM_BUILD_ROOT{%{ruby_rubylibdir},%{ruby_archdir},%{ruby_ridir}} \
+	$RPM_BUILD_ROOT{%{ruby_vendorlibdir},%{ruby_vendorarchdir},%{ruby_ridir}} \
 	$RPM_BUILD_ROOT%{_bindir} \
 	$RPM_BUILD_ROOT%{_libdir}/phusion-passenger/agents/apache2 \
 	$RPM_BUILD_ROOT%{_datadir}/phusion-passenger/helper-scripts
 
 install -p ext/apache2/mod_passenger.so $RPM_BUILD_ROOT%{_pkglibdir}
-install -p ext/ruby/ruby-*/passenger_native_support.so $RPM_BUILD_ROOT%{ruby_archdir}
+install -p ext/ruby/ruby-*/passenger_native_support.so $RPM_BUILD_ROOT%{ruby_vendorarchdir}
 install -p bin/passenger-{config,memory-stats,status} bin/passenger $RPM_BUILD_ROOT%{_bindir}
 install -p agents/PassengerLoggingAgent agents/PassengerWatchdog $RPM_BUILD_ROOT%{_libdir}/phusion-passenger/agents
 install -p agents/apache2/PassengerHelperAgent $RPM_BUILD_ROOT%{_libdir}/phusion-passenger/agents/apache2
 install -p helper-scripts/* $RPM_BUILD_ROOT%{_datadir}/phusion-passenger/helper-scripts
-cp -a lib/* $RPM_BUILD_ROOT%{ruby_rubylibdir}
+cp -a lib/* $RPM_BUILD_ROOT%{ruby_vendorlibdir}
 cp -p man/*.1 $RPM_BUILD_ROOT%{_mandir}/man1
 cp -p man/*.8 $RPM_BUILD_ROOT%{_mandir}/man8
 cp -a ri/* $RPM_BUILD_ROOT%{ruby_ridir}
@@ -125,7 +123,7 @@ cp -p %{SOURCE1} $RPM_BUILD_ROOT%{_sysconfdir}/75_mod_rails.conf
 	$RPM_BUILD_ROOT%{_datadir}/phusion-passenger/helper-scripts/*
 
 %{__sed} -i -e 's|#!/usr/bin/env python|#!%{_bindir}/python|' \
-	$RPM_BUILD_ROOT%{ruby_rubylibdir}/phusion_passenger/wsgi/request_handler.py
+	$RPM_BUILD_ROOT%{ruby_vendorlibdir}/phusion_passenger/wsgi/request_handler.py
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -149,22 +147,24 @@ fi
 %attr(755,root,root) %{_bindir}/passenger-config
 %attr(755,root,root) %{_bindir}/passenger-memory-stats
 %attr(755,root,root) %{_bindir}/passenger-status
-%attr(755,root,root) %{ruby_archdir}/passenger_native_support.so
+%{_mandir}/man1/passenger-config.1*
+%{_mandir}/man1/passenger-stress-test.1*
+%{_mandir}/man8/passenger-memory-stats.8*
+%{_mandir}/man8/passenger-status.8*
+
+%attr(755,root,root) %{ruby_vendorarchdir}/passenger_native_support.so
+%{ruby_vendorlibdir}/phusion_passenger.rb
+%{ruby_vendorlibdir}/phusion_passenger
+
 %dir %{_libdir}/phusion-passenger
 %dir %{_libdir}/phusion-passenger/agents
 %attr(755,root,root) %{_libdir}/phusion-passenger/agents/PassengerLoggingAgent
 %attr(755,root,root) %{_libdir}/phusion-passenger/agents/PassengerWatchdog
 %dir %{_libdir}/phusion-passenger/agents/apache2
 %attr(755,root,root) %{_libdir}/phusion-passenger/agents/apache2/Passenger*
-%{ruby_rubylibdir}/phusion_passenger
-%{ruby_rubylibdir}/phusion_passenger.rb
 %dir %{_datadir}/phusion-passenger
 %dir %{_datadir}/phusion-passenger/helper-scripts
 %attr(755,root,root) %{_datadir}/phusion-passenger/helper-scripts/*
-%{_mandir}/man1/passenger-config.1*
-%{_mandir}/man1/passenger-stress-test.1*
-%{_mandir}/man8/passenger-memory-stats.8*
-%{_mandir}/man8/passenger-status.8*
 
 %files ri
 %defattr(644,root,root,755)
