@@ -25,7 +25,7 @@ Source0:	https://github.com/FooBarWidget/passenger/archive/release-%{version}.ta
 Source1:	%{name}.conf
 Patch0:		%{name}-nogems.patch
 Patch1:		%{name}-alias+public.patch
-Patch2:		%{name}-build.patch
+Patch2:		passenger_apache_fix_autofoo.patch
 URL:		http://www.modrails.com
 BuildRequires:	apache-base >= 2.0.55-1
 BuildRequires:	apache-devel >= 2.0.55-1
@@ -70,9 +70,7 @@ Dokumentacji w formacie ri dla Apache mod_rails.
 %setup -q -n %{gem_name}-release-%{version}
 %patch0 -p1
 %patch1 -p0
-#%patch2 -p1
-
-%{__sed} -i~ -e 's!/usr/lib/!%{_libdir}/!g' ext/common/ResourceLocator.h
+%patch2 -p0
 
 %build
 (cd ext/libev; %{__autoconf})

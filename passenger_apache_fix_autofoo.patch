@@ -1,0 +1,14 @@
+--- build/config.rb.orig	2012-08-14 16:40:28.375910357 -0400
++++ build/config.rb	2012-08-14 16:41:29.850088472 -0400
+@@ -26,9 +26,9 @@
+ CXX      = string_option("CXX", "g++")
+ # TODO: consider -fcommon
+ if OPTIMIZE
+-	OPTIMIZATION_FLAGS = "#{PlatformInfo.debugging_cflags} -O2 -DBOOST_DISABLE_ASSERTS".strip
++	OPTIMIZATION_FLAGS = "#{ENV['CXXFLAGS']} #{PlatformInfo.debugging_cflags} -O2 -DBOOST_DISABLE_ASSERTS".strip
+ else
+-	OPTIMIZATION_FLAGS = "#{PlatformInfo.debugging_cflags} -DPASSENGER_DEBUG -DBOOST_DISABLE_ASSERTS".strip
++	OPTIMIZATION_FLAGS = "#{ENV['CXXFLAGS']} #{PlatformInfo.debugging_cflags} -DPASSENGER_DEBUG -DBOOST_DISABLE_ASSERTS".strip
+ end
+ 
+ # Extra compiler flags that should always be passed to the C/C++ compiler.
