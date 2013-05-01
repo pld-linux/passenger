@@ -72,16 +72,18 @@ find -newer README -o -print0 | xargs -0 touch --reference %{SOURCE0}
 %{__sed} -i -e 's!/usr/lib/!%{_libdir}/!g' ext/common/ResourceLocator.h
 
 %build
-(cd ext/libev ; %{__autoconf})
+(cd ext/libev; %{__autoconf})
 
+cc="%{__cc}"; cc=${cc#ccache }
+cxx="%{__cxx}"; cxx=${cxx#ccache }
 rake apache2 \
 	RELEASE=yes \
 	OPTIMIZE=yes \
 	APXS2=%{apxs} \
 	CXXFLAGS="%{rpmcxxflags}" \
 	CFLAGS="%{rpmcflags}" \
-	CXX=%{__cxx} \
-	CC=%{__cc}
+	CXX="$cxx" \
+	CC="$cc"
 
 rdoc --ri --op ri lib ext/ruby
 %{__rm} -r ri/{ConditionVariable,Exception,GC,IO,Object,Process,Signal}
