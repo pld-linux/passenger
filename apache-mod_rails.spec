@@ -1,7 +1,3 @@
-#
-# TODO:
-# - separate -devel with ExtUtils::Embed and friends?
-
 %define		gem_name	passenger
 Summary:	A module to bridge Ruby on Rails to Apache
 Name:		apache-mod_rails
