@@ -1,3 +1,7 @@
+#
+# Conditional build:
+%bcond_with	tests		# build without tests
+
 %define		gem_name	passenger
 Summary:	A module to bridge Ruby on Rails to Apache
 Name:		apache-mod_rails
@@ -11,6 +15,7 @@ Release:	0.4
 License:	Boost and BSD and BSD with advertising and MIT and zlib
 Group:		Networking/Daemons/HTTP
 Source0:	https://github.com/FooBarWidget/passenger/archive/release-%{version}.tar.gz
+# Source0-md5:	de848f42cb4f83e19d6c8a41a187a4db
 Source1:	%{name}.conf
 Patch0:		%{name}-nogems.patch
 Patch1:		%{name}-alias+public.patch
@@ -66,22 +71,38 @@ Dokumentacji w formacie ri dla Apache mod_rails.
 %patch2 -p0
 %patch3 -p1
 
+mv test/config.yml{.example,}
+
 # Don't use bundled libev
 rm -r ext/libev
 
 %build
-USE_VENDORED_LIBEV=false \
+export USE_VENDORED_LIBEV=false
+export CC="%{__cc}"
+export CXX="%{__cxx}"
+export CFLAGS="%{rpmcflags}"
+export CXXFLAGS="%{rpmcxxflags}"
+export APACHECTL=%{_sbindir}/apachectl
+
 rake apache2 V=1 \
 	RELEASE=yes \
 	OPTIMIZE=yes \
-	APACHECTL=%{_sbindir}/apachectl \
-	APXS2=%{apxs} \
-	HTTPD=foo \
-	HTTPD_VERSION=$(rpm -q apache-devel --qf '%{V}') \
-	CC="%{__cc}" \
-	CXX="%{__cxx}" \
-	CFLAGS="%{rpmcflags}" \
-	CXXFLAGS="%{rpmcxxflags}"
+	HTTPD=false
+
+%if %{with tests}
+# Run the tests, capture the output, but don't fail the build if the tests fail
+#
+# This will make the test failure non-critical, but it should be examined
+# anyway.
+sed -i 's|sh "cd test && \./cxx/CxxTestMain"|& rescue true|' build/cxx_tests.rb
+
+# adjust for rspec 2 while the test suite seems to require RSpec 1.
+sed -i \
+	"s|return locate_ruby_tool('spec')|return locate_ruby_tool('rspec')|" \
+	lib/phusion_passenger/platform_info/ruby.rb
+
+rake test --trace
+%endif
 
 rdoc --ri --op ri lib ext/ruby
 %{__rm} -r ri/{ConditionVariable,Exception,GC,IO,Object,Process,Signal}
