@@ -6,7 +6,7 @@
 Summary:	A module to bridge Ruby on Rails to Apache
 Name:		apache-mod_rails
 Version:	3.0.19
-Release:	0.4
+Release:	1
 # Passenger code uses MIT license.
 # Bundled(Boost) uses Boost Software License
 # BCrypt and Blowfish files use BSD license.
