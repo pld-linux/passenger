@@ -84,11 +84,12 @@ export CFLAGS="%{rpmcflags}"
 export CXXFLAGS="%{rpmcxxflags}"
 export APACHECTL=%{_sbindir}/apachectl
 export HTTPD_VERSION=$(rpm -q apache-devel --qf '%{V}')
+export HTTPD=%{_sbindir}/httpd
+export APXS2=%{apxs}
 
 rake apache2 V=1 \
 	RELEASE=yes \
-	OPTIMIZE=yes \
-	HTTPD=false
+	OPTIMIZE=yes
 
 %if %{with tests}
 # Run the tests, capture the output, but don't fail the build if the tests fail
