@@ -83,6 +83,7 @@ export CXX="%{__cxx}"
 export CFLAGS="%{rpmcflags}"
 export CXXFLAGS="%{rpmcxxflags}"
 export APACHECTL=%{_sbindir}/apachectl
+export HTTPD_VERSION=$(rpm -q apache-devel --qf '%{V}')
 
 rake apache2 V=1 \
 	RELEASE=yes \
