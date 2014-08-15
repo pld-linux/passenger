@@ -1,11 +1,9 @@
-# Obsolete: see passenger.spec instead
 #
 # Conditional build:
 %bcond_with	tests		# build without tests
 
-%define		gem_name	passenger
 Summary:	A module to bridge Ruby on Rails to Apache
-Name:		apache-mod_rails
+Name:		passenger
 Version:	3.0.19
 Release:	2
 # Passenger code uses MIT license.
@@ -17,10 +15,10 @@ License:	Boost and BSD and BSD with advertising and MIT and zlib
 Group:		Networking/Daemons/HTTP
 Source0:	https://github.com/phusion/passenger/archive/release-%{version}.tar.gz
 # Source0-md5:	de848f42cb4f83e19d6c8a41a187a4db
-Source1:	%{name}.conf
-Patch0:		%{name}-nogems.patch
-Patch1:		%{name}-alias+public.patch
-Patch2:		passenger_apache_fix_autofoo.patch
+Source1:	apache-mod_%{name}.conf
+Patch0:		nogems.patch
+Patch1:		alias+public.patch
+Patch2:		%{name}_apache_fix_autofoo.patch
 Patch3:		progs.patch
 URL:		https://www.phusionpassenger.com/
 BuildRequires:	apache-devel >= 2.0.55-1
@@ -51,7 +49,7 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 Phusion Passenger — a.k.a. mod_rails — makes deployment of
 applications built on the revolutionary Ruby on Rails web framework a
 breeze. It follows the usual Ruby on Rails conventions, such as
-"Don’t-Repeat-Yourself".
+"Don't-Repeat-Yourself".
 
 %package ri
 Summary:	ri documentation for Apache mod_rails
@@ -66,7 +64,7 @@ ri documentation for Apache mod_rails.
 Dokumentacji w formacie ri dla Apache mod_rails.
 
 %prep
-%setup -q -n %{gem_name}-release-%{version}
+%setup -q -n %{name}-release-%{version}
 %patch0 -p1
 %patch1 -p0
 %patch2 -p0
