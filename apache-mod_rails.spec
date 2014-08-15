@@ -1,3 +1,4 @@
+# Obsolete: see passenger.spec instead
 #
 # Conditional build:
 %bcond_with	tests		# build without tests
@@ -14,14 +15,14 @@ Release:	2
 # See: https://bugzilla.redhat.com/show_bug.cgi?id=470696#c146
 License:	Boost and BSD and BSD with advertising and MIT and zlib
 Group:		Networking/Daemons/HTTP
-Source0:	https://github.com/FooBarWidget/passenger/archive/release-%{version}.tar.gz
+Source0:	https://github.com/phusion/passenger/archive/release-%{version}.tar.gz
 # Source0-md5:	de848f42cb4f83e19d6c8a41a187a4db
 Source1:	%{name}.conf
 Patch0:		%{name}-nogems.patch
 Patch1:		%{name}-alias+public.patch
 Patch2:		passenger_apache_fix_autofoo.patch
 Patch3:		progs.patch
-URL:		http://www.modrails.com/
+URL:		https://www.phusionpassenger.com/
 BuildRequires:	apache-devel >= 2.0.55-1
 BuildRequires:	apr-devel >= 1:1.0.0
 BuildRequires:	apr-util-devel >= 1:1.0.0
