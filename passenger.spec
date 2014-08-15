@@ -4,8 +4,8 @@
 
 Summary:	A module to bridge Ruby on Rails to Apache
 Name:		passenger
-Version:	3.0.19
-Release:	2
+Version:	4.0.18
+Release:	0.1
 # Passenger code uses MIT license.
 # Bundled(Boost) uses Boost Software License
 # BCrypt and Blowfish files use BSD license.
@@ -14,7 +14,7 @@ Release:	2
 License:	Boost and BSD and BSD with advertising and MIT and zlib
 Group:		Networking/Daemons/HTTP
 Source0:	https://github.com/phusion/passenger/archive/release-%{version}.tar.gz
-# Source0-md5:	de848f42cb4f83e19d6c8a41a187a4db
+# Source0-md5:	8ddbc3fae662f04bf6996aaed16d42ff
 Source1:	apache-mod_%{name}.conf
 Patch0:		nogems.patch
 Patch1:		alias+public.patch
@@ -36,8 +36,9 @@ BuildRequires:	ruby-rake >= 0.8.0
 BuildRequires:	ruby-rdoc
 BuildRequires:	sed >= 4.0
 BuildRequires:	zlib-devel
-Requires:	apache(modules-api) = %apache_modules_api
-Provides:	apache(mod_rails)
+%if %(locale -a | grep -q '^en_US$'; echo $?)
+BuildRequires:	glibc-localedb-all
+%endif
 Obsoletes:	apache-mod_rails-rdoc
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
@@ -46,31 +47,46 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 %define		_sysconfdir	%(%{apxs} -q SYSCONFDIR 2>/dev/null)/conf.d
 
 %description
-Phusion Passenger — a.k.a. mod_rails — makes deployment of
+Phusion Passenger - a.k.a. mod_passenger - makes deployment of
 applications built on the revolutionary Ruby on Rails web framework a
 breeze. It follows the usual Ruby on Rails conventions, such as
 "Don't-Repeat-Yourself".
 
-%package ri
-Summary:	ri documentation for Apache mod_rails
-Summary(pl.UTF-8):	Dokumentacja w formacie ri dla Apache mod_rails
+%package -n apache-mod_passenger
+Summary:	Apache Module for Phusion Passenger
+License:	Boost and BSD and BSD with advertising and MIT and zlib
+Group:		Daemons
+Requires:	%{name} = %{version}-%{release}
+Requires:	apache(modules-api) = %apache_modules_api
+Provides:	apache(mod_passenger)
+Obsoletes:	apache-mod_rails < 4.0
+
+%description -n apache-mod_passenger
+This package contains the pluggable Apache server module for Phusion
+Passenger(tm).
+
+%package -n ruby-passenger-ri
+Summary:	ri documentation for Phusion Passenger
+Summary(pl.UTF-8):	Dokumentacja w formacie ri dla Phusion Passenger
 Group:		Documentation
 Requires:	ruby
+Obsoletes:	apache-mod_rails-ri < 4.0
 
-%description ri
-ri documentation for Apache mod_rails.
+%description -n ruby-passenger-ri
+ri documentation for Phusion Passenger
 
-%description ri -l pl.UTF-8
-Dokumentacji w formacie ri dla Apache mod_rails.
+%description -n ruby-passenger-ri -l pl.UTF-8
+Dokumentacji w formacie ri dla Phusion Passenger
 
 %prep
 %setup -q -n %{name}-release-%{version}
-%patch0 -p1
-%patch1 -p0
-%patch2 -p0
-%patch3 -p1
+#%patch0 -p1
+#%patch1 -p0
+#%patch2 -p0
+#%patch3 -p1
 
-mv test/config.yml{.example,}
+%{__sed} -i -e 's|#!/usr/bin/env python|#!%{_bindir}/python|' helper-scripts/*.py
+%{__sed} -i -e 's|#!/usr/bin/env ruby|#!%{_bindir}/ruby|' helper-scripts/{prespawn,download_binaries/extconf.rb,*.rb} bin/*
 
 # Don't use bundled libev
 rm -r ext/libev
@@ -81,6 +97,7 @@ export CC="%{__cc}"
 export CXX="%{__cxx}"
 export CFLAGS="%{rpmcflags}"
 export CXXFLAGS="%{rpmcxxflags}"
+
 export APACHECTL=%{_sbindir}/apachectl
 export HTTPD_VERSION=$(rpm -q apache-devel --qf '%{V}')
 export HTTPD=%{_sbindir}/httpd
@@ -105,8 +122,10 @@ sed -i \
 rake test --trace
 %endif
 
+# UTF8 locale needed for doc generation
+LC_ALL=en_US.UTF-8 \
 rdoc --ri --op ri lib ext/ruby
-%{__rm} -r ri/{ConditionVariable,Exception,GC,IO,Object,Process,Signal}
+%{__rm} -r ri/{GC,IO,Object,Signal,CommonLibraryBuilder,Exception}
 %{__rm} ri/{cache.ri,created.rid}
 
 %install
@@ -117,44 +136,34 @@ install -d $RPM_BUILD_ROOT{%{_pkglibdir},%{_sysconfdir},%{_mandir}/man{1,8}} \
 	$RPM_BUILD_ROOT%{_libdir}/phusion-passenger/agents/apache2 \
 	$RPM_BUILD_ROOT%{_datadir}/phusion-passenger/helper-scripts
 
-install -p ext/apache2/mod_passenger.so $RPM_BUILD_ROOT%{_pkglibdir}
-install -p ext/ruby/ruby-*/passenger_native_support.so $RPM_BUILD_ROOT%{ruby_vendorarchdir}
-install -p bin/passenger-{config,memory-stats,status} bin/passenger $RPM_BUILD_ROOT%{_bindir}
-install -p agents/PassengerLoggingAgent agents/PassengerWatchdog $RPM_BUILD_ROOT%{_libdir}/phusion-passenger/agents
-install -p agents/apache2/PassengerHelperAgent $RPM_BUILD_ROOT%{_libdir}/phusion-passenger/agents/apache2
-install -p helper-scripts/* $RPM_BUILD_ROOT%{_datadir}/phusion-passenger/helper-scripts
+install -p buildout/apache2/mod_passenger.so $RPM_BUILD_ROOT%{_pkglibdir}
+cp -p %{SOURCE1} $RPM_BUILD_ROOT%{_sysconfdir}/75_mod_passenger.conf
+
+install -p buildout/ruby/ruby-*/passenger_native_support.so $RPM_BUILD_ROOT%{ruby_vendorarchdir}
 cp -a lib/* $RPM_BUILD_ROOT%{ruby_vendorlibdir}
+
+install -p bin/passenger-{config,memory-stats,status} bin/passenger $RPM_BUILD_ROOT%{_bindir}
+install -p buildout/agents/{PassengerLoggingAgent,PassengerWatchdog,PassengerHelperAgent} $RPM_BUILD_ROOT%{_libdir}/phusion-passenger/agents
+cp -a helper-scripts/* $RPM_BUILD_ROOT%{_datadir}/phusion-passenger/helper-scripts
+
 cp -p man/*.1 $RPM_BUILD_ROOT%{_mandir}/man1
 cp -p man/*.8 $RPM_BUILD_ROOT%{_mandir}/man8
 cp -a ri/* $RPM_BUILD_ROOT%{ruby_ridir}
-cp -p %{SOURCE1} $RPM_BUILD_ROOT%{_sysconfdir}/75_mod_rails.conf
-
-%{__sed} -i -e 's|#!/usr/bin/env ruby|#!%{_bindir}/ruby|' \
-	$RPM_BUILD_ROOT%{_bindir}/passenger \
-	$RPM_BUILD_ROOT%{_bindir}/passenger-* \
-	$RPM_BUILD_ROOT%{_datadir}/phusion-passenger/helper-scripts/*
-
-%{__sed} -i -e 's|#!/usr/bin/env python|#!%{_bindir}/python|' \
-	$RPM_BUILD_ROOT%{ruby_vendorlibdir}/phusion_passenger/wsgi/request_handler.py
 
 %clean
 rm -rf $RPM_BUILD_ROOT
 
-%post
+%post -n apache-mod_passenger
 %service -q httpd restart
 
-%postun
+%postun -n apache-mod_passenger
 if [ "$1" = "0" ]; then
 	%service -q httpd restart
 fi
 
 %files
 %defattr(644,root,root,755)
-%doc INSTALL README
-#%doc doc/{A*.txt,Security*.txt,*Apache.txt}
-#%doc doc/{A*.html,Security*.html,*Apache.html,images}
-%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/*_mod_rails.conf
-%attr(755,root,root) %{_pkglibdir}/mod_passenger.so
+%doc README.md INSTALL.md
 %attr(755,root,root) %{_bindir}/passenger
 %attr(755,root,root) %{_bindir}/passenger-config
 %attr(755,root,root) %{_bindir}/passenger-memory-stats
@@ -170,14 +179,20 @@ fi
 
 %dir %{_libdir}/phusion-passenger
 %dir %{_libdir}/phusion-passenger/agents
+%attr(755,root,root) %{_libdir}/phusion-passenger/agents/PassengerHelperAgent
 %attr(755,root,root) %{_libdir}/phusion-passenger/agents/PassengerLoggingAgent
 %attr(755,root,root) %{_libdir}/phusion-passenger/agents/PassengerWatchdog
-%dir %{_libdir}/phusion-passenger/agents/apache2
-%attr(755,root,root) %{_libdir}/phusion-passenger/agents/apache2/Passenger*
 %dir %{_datadir}/phusion-passenger
 %dir %{_datadir}/phusion-passenger/helper-scripts
 %attr(755,root,root) %{_datadir}/phusion-passenger/helper-scripts/*
 
-%files ri
+%files -n apache-mod_passenger
+%defattr(644,root,root,755)
+%doc doc/Users?guide?Apache.txt
+%defattr(644,root,root,755)
+%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/*_mod_passenger.conf
+%attr(755,root,root) %{_pkglibdir}/mod_passenger.so
+
+%files -n ruby-passenger-ri
 %defattr(644,root,root,755)
 %{ruby_ridir}/PhusionPassenger
