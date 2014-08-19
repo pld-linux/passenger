@@ -1,10 +1,13 @@
-#
+# TODO
+# - pass our cppflags
+#   /usr/include/features.h:341:4: warning: #warning _FORTIFY_SOURCE requires compiling with optimization (-O) [-Wcpp]
+#   #  warning _FORTIFY_SOURCE requires compiling with optimization (-O)
 # Conditional build:
 %bcond_with	tests		# build without tests
 
 Summary:	A module to bridge Ruby on Rails to Apache
 Name:		passenger
-Version:	4.0.18
+Version:	4.0.48
 Release:	0.1
 # Passenger code uses MIT license.
 # Bundled(Boost) uses Boost Software License
@@ -14,7 +17,7 @@ Release:	0.1
 License:	Boost and BSD and BSD with advertising and MIT and zlib
 Group:		Networking/Daemons/HTTP
 Source0:	https://github.com/phusion/passenger/archive/release-%{version}.tar.gz
-# Source0-md5:	8ddbc3fae662f04bf6996aaed16d42ff
+# Source0-md5:	e77d1940f9bc86314d84634236339d1b
 Source1:	apache-mod_%{name}.conf
 Patch0:		nogems.patch
 Patch1:		alias+public.patch
@@ -22,6 +25,7 @@ Patch2:		%{name}_apache_fix_autofoo.patch
 Patch3:		progs.patch
 URL:		https://www.phusionpassenger.com/
 BuildRequires:	apache-devel >= 2.0.55-1
+BuildRequires:	apache-tools
 BuildRequires:	apr-devel >= 1:1.0.0
 BuildRequires:	apr-util-devel >= 1:1.0.0
 #BuildRequires:	asciidoc
@@ -125,7 +129,7 @@ rake test --trace
 # UTF8 locale needed for doc generation
 LC_ALL=en_US.UTF-8 \
 rdoc --ri --op ri lib ext/ruby
-%{__rm} -r ri/{GC,IO,Object,Signal,CommonLibraryBuilder,Exception}
+%{__rm} -r ri/{GC,IO,Object,Signal,CommonLibraryBuilder,Exception,DaemonController}
 %{__rm} ri/{cache.ri,created.rid}
 
 %install
@@ -169,7 +173,6 @@ fi
 %attr(755,root,root) %{_bindir}/passenger-memory-stats
 %attr(755,root,root) %{_bindir}/passenger-status
 %{_mandir}/man1/passenger-config.1*
-%{_mandir}/man1/passenger-stress-test.1*
 %{_mandir}/man8/passenger-memory-stats.8*
 %{_mandir}/man8/passenger-status.8*
 
