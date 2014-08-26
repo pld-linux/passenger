@@ -1,7 +1,3 @@
-# TODO
-# - pass our cppflags
-#   /usr/include/features.h:341:4: warning: #warning _FORTIFY_SOURCE requires compiling with optimization (-O) [-Wcpp]
-#   #  warning _FORTIFY_SOURCE requires compiling with optimization (-O)
 # Conditional build:
 %bcond_with	tests		# build without tests
 
@@ -99,8 +95,10 @@ rm -r ext/libev
 export USE_VENDORED_LIBEV=false
 export CC="%{__cc}"
 export CXX="%{__cxx}"
-export CFLAGS="%{rpmcflags}"
-export CXXFLAGS="%{rpmcxxflags}"
+export CFLAGS="%{rpmcflags} -fno-strict-aliasing"
+export CXXFLAGS="%{rpmcxxflags} -fno-strict-aliasing"
+export EXTRA_CFLAGS="%{rpmcflags} -fno-strict-aliasing"
+export EXTRA_CXXFLAGS="%{rpmcxxflags} -fno-strict-aliasing"
 
 export APACHECTL=%{_sbindir}/apachectl
 export HTTPD_VERSION=$(rpm -q apache-devel --qf '%{V}')
