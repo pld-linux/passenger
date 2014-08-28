@@ -3,7 +3,7 @@
 
 Summary:	A module to bridge Ruby on Rails to Apache
 Name:		passenger
-Version:	4.0.48
+Version:	4.0.50
 Release:	0.1
 # Passenger code uses MIT license.
 # Bundled(Boost) uses Boost Software License
@@ -13,7 +13,7 @@ Release:	0.1
 License:	Boost and BSD and BSD with advertising and MIT and zlib
 Group:		Networking/Daemons/HTTP
 Source0:	https://github.com/phusion/passenger/archive/release-%{version}.tar.gz
-# Source0-md5:	e77d1940f9bc86314d84634236339d1b
+# Source0-md5:	69c6ade41d870782ae12c3f49d79ce20
 Source1:	apache-mod_%{name}.conf
 Patch0:		nogems.patch
 Patch1:		alias+public.patch
