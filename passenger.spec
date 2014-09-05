@@ -4,7 +4,7 @@
 Summary:	A module to bridge Ruby on Rails to Apache
 Name:		passenger
 Version:	4.0.50
-Release:	0.1
+Release:	1
 # Passenger code uses MIT license.
 # Bundled(Boost) uses Boost Software License
 # BCrypt and Blowfish files use BSD license.
@@ -15,10 +15,8 @@ Group:		Networking/Daemons/HTTP
 Source0:	https://github.com/phusion/passenger/archive/release-%{version}.tar.gz
 # Source0-md5:	69c6ade41d870782ae12c3f49d79ce20
 Source1:	apache-mod_%{name}.conf
-Patch0:		nogems.patch
-Patch1:		alias+public.patch
-Patch2:		%{name}_apache_fix_autofoo.patch
-Patch3:		progs.patch
+Patch0:		alias+public.patch
+Patch1:		dirs.patch
 URL:		https://www.phusionpassenger.com/
 BuildRequires:	apache-devel >= 2.0.55-1
 BuildRequires:	apache-tools
@@ -59,6 +57,7 @@ Group:		Daemons
 Requires:	%{name} = %{version}-%{release}
 Requires:	apache(modules-api) = %apache_modules_api
 Provides:	apache(mod_passenger)
+Provides:	apache(mod_rails)
 Obsoletes:	apache-mod_rails < 4.0
 
 %description -n apache-mod_passenger
@@ -81,9 +80,12 @@ Dokumentacji w formacie ri dla Phusion Passenger
 %prep
 %setup -q -n %{name}-release-%{version}
 #%patch0 -p1
-#%patch1 -p0
-#%patch2 -p0
-#%patch3 -p1
+%patch1 -p1
+
+__rubydir=$(echo %{ruby_vendorlibdir} | %{__sed} -e 's|/usr||')
+
+%{__sed} -i -e "s|@@LIB@@|%{_lib}|g" \
+	-e "s|@@RUBYLIBDIR@@|$__rubydir|g" ext/common/ResourceLocator.h
 
 %{__sed} -i -e 's|#!/usr/bin/env python|#!%{_bindir}/python|' helper-scripts/*.py
 %{__sed} -i -e 's|#!/usr/bin/env ruby|#!%{_bindir}/ruby|' helper-scripts/{prespawn,download_binaries/extconf.rb,*.rb} bin/*
@@ -145,8 +147,9 @@ install -p buildout/ruby/ruby-*/passenger_native_support.so $RPM_BUILD_ROOT%{rub
 cp -a lib/* $RPM_BUILD_ROOT%{ruby_vendorlibdir}
 
 install -p bin/passenger-{config,memory-stats,status} bin/passenger $RPM_BUILD_ROOT%{_bindir}
-install -p buildout/agents/{PassengerLoggingAgent,PassengerWatchdog,PassengerHelperAgent} $RPM_BUILD_ROOT%{_libdir}/phusion-passenger/agents
+install -p buildout/agents/{PassengerLoggingAgent,PassengerWatchdog,PassengerHelperAgent,SpawnPreparer,TempDirToucher} $RPM_BUILD_ROOT%{_libdir}/phusion-passenger/agents
 cp -a helper-scripts/* $RPM_BUILD_ROOT%{_datadir}/phusion-passenger/helper-scripts
+cp -a resources node_lib $RPM_BUILD_ROOT%{_datadir}/phusion-passenger/
 
 cp -p man/*.1 $RPM_BUILD_ROOT%{_mandir}/man1
 cp -p man/*.8 $RPM_BUILD_ROOT%{_mandir}/man8
@@ -183,9 +186,13 @@ fi
 %attr(755,root,root) %{_libdir}/phusion-passenger/agents/PassengerHelperAgent
 %attr(755,root,root) %{_libdir}/phusion-passenger/agents/PassengerLoggingAgent
 %attr(755,root,root) %{_libdir}/phusion-passenger/agents/PassengerWatchdog
+%attr(755,root,root) %{_libdir}/phusion-passenger/agents/SpawnPreparer
+%attr(755,root,root) %{_libdir}/phusion-passenger/agents/TempDirToucher
 %dir %{_datadir}/phusion-passenger
 %dir %{_datadir}/phusion-passenger/helper-scripts
 %attr(755,root,root) %{_datadir}/phusion-passenger/helper-scripts/*
+%{_datadir}/phusion-passenger/resources
+%{_datadir}/phusion-passenger/node_lib
 
 %files -n apache-mod_passenger
 %defattr(644,root,root,755)
