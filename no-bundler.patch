@@ -1,0 +1,41 @@
+--- passenger-release-4.0.50/lib/phusion_passenger/loader_shared_helpers.rb~	2014-08-26 16:15:57.000000000 +0200
++++ passenger-release-4.0.50/lib/phusion_passenger/loader_shared_helpers.rb	2014-09-05 08:19:31.449268337 +0200
+@@ -230,38 +230,6 @@
+ 		# The app developer may also override our strategy with this magic file.
+ 		elsif File.exist?('config/setup_load_paths.rb')
+ 			require File.expand_path('config/setup_load_paths')
+-
+-		# Older versions of Bundler use .bundle/environment.rb as the Bundler
+-		# environment lock file. This has been replaced by Gemfile.lock in later
+-		# versions, but we still support the older mechanism.
+-		# If the Bundler environment lock file exists then load that. If it
+-		# exists then there's a 99.9% chance that loading it is the correct
+-		# thing to do.
+-		elsif File.exist?('.bundle/environment.rb')
+-			running_bundler(options) do
+-				require File.expand_path('.bundle/environment')
+-			end
+-
+-		# If the legacy Bundler environment file doesn't exist then there are two
+-		# possibilities:
+-		# 1. Bundler is not used, in which case we don't have to do anything.
+-		# 2. Bundler *is* used, but either the user is using a newer Bundler versions,
+-		#    or the gems are not locked. In either case, we're supposed to call
+-		#    Bundler.setup.
+-		#
+-		# The existence of Gemfile indicates whether (2) is true:
+-		elsif File.exist?('Gemfile')
+-			# In case of Rails 3, config/boot.rb already calls Bundler.setup.
+-			# However older versions of Rails may not so loading boot.rb might
+-			# not be the correct thing to do. To be on the safe side we
+-			# call Bundler.setup ourselves; calling Bundler.setup twice is
+-			# harmless. If this isn't the correct thing to do after all then
+-			# there's always the load_path_setup_file option and
+-			# setup_load_paths.rb.
+-			running_bundler(options) do
+-				require 'rubygems'
+-				require 'bundler/setup'
+-			end
+ 		end
+ 
+ 

@@ -4,7 +4,7 @@
 Summary:	A module to bridge Ruby on Rails to Apache
 Name:		passenger
 Version:	4.0.50
-Release:	1
+Release:	2
 # Passenger code uses MIT license.
 # Bundled(Boost) uses Boost Software License
 # BCrypt and Blowfish files use BSD license.
@@ -17,6 +17,7 @@ Source0:	https://github.com/phusion/passenger/archive/release-%{version}.tar.gz
 Source1:	apache-mod_%{name}.conf
 Patch0:		alias+public.patch
 Patch1:		dirs.patch
+Patch2:		no-bundler.patch
 URL:		https://www.phusionpassenger.com/
 BuildRequires:	apache-devel >= 2.0.55-1
 BuildRequires:	apache-tools
@@ -56,6 +57,7 @@ License:	Boost and BSD and BSD with advertising and MIT and zlib
 Group:		Daemons
 Requires:	%{name} = %{version}-%{release}
 Requires:	apache(modules-api) = %apache_modules_api
+Requires:	ruby-bundler
 Provides:	apache(mod_passenger)
 Provides:	apache(mod_rails)
 Obsoletes:	apache-mod_rails < 4.0
@@ -81,6 +83,7 @@ Dokumentacji w formacie ri dla Phusion Passenger
 %setup -q -n %{name}-release-%{version}
 #%patch0 -p1
 %patch1 -p1
+%patch2 -p1
 
 __rubydir=$(echo %{ruby_vendorlibdir} | %{__sed} -e 's|/usr||')
 
