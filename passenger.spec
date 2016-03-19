@@ -4,7 +4,7 @@
 Summary:	A module to bridge Ruby on Rails to Apache
 Name:		passenger
 Version:	4.0.50
-Release:	2
+Release:	3
 # Passenger code uses MIT license.
 # Bundled(Boost) uses Boost Software License
 # BCrypt and Blowfish files use BSD license.
