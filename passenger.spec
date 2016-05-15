@@ -1,10 +1,12 @@
+#
 # Conditional build:
-%bcond_with	tests		# build without tests
+%bcond_with	tests		# test target
 
 Summary:	A module to bridge Ruby on Rails to Apache
+Summary(pl.UTF-8):	Moduł służący za bramkę Ruby on Rails do Apache'a
 Name:		passenger
 Version:	4.0.50
-Release:	3
+Release:	4
 # Passenger code uses MIT license.
 # Bundled(Boost) uses Boost Software License
 # BCrypt and Blowfish files use BSD license.
@@ -51,8 +53,15 @@ applications built on the revolutionary Ruby on Rails web framework a
 breeze. It follows the usual Ruby on Rails conventions, such as
 "Don't-Repeat-Yourself".
 
+%description -l pl.UTF-8
+Phusion Passenger (inaczej mod_passenger) ułatwia wdrażanie aplikacji
+zbudowanych w oparciu o rewolucyjny szkielet WWW Ruby on Rails. Jest
+zgodny ze zwyczajowymi konwencjami Ruby on Rails, takimi jak "nie
+powtarzaj się".
+
 %package -n apache-mod_passenger
 Summary:	Apache Module for Phusion Passenger
+Summary(pl.UTF-8):	Moduł Apache'a dla Phusion Passengera
 License:	Boost and BSD and BSD with advertising and MIT and zlib
 Group:		Daemons
 Requires:	%{name} = %{version}-%{release}
@@ -64,20 +73,24 @@ Obsoletes:	apache-mod_rails < 4.0
 
 %description -n apache-mod_passenger
 This package contains the pluggable Apache server module for Phusion
-Passenger(tm).
+Passenger.
+
+%description -n apache-mod_passenger -l pl.UTF-8
+Ten pakiet zawiera ładowalny moduł serwera Apache dla Phusion
+Passengera.
 
 %package -n ruby-passenger-ri
 Summary:	ri documentation for Phusion Passenger
-Summary(pl.UTF-8):	Dokumentacja w formacie ri dla Phusion Passenger
+Summary(pl.UTF-8):	Dokumentacja w formacie ri dla Phusion Passengera
 Group:		Documentation
 Requires:	ruby
 Obsoletes:	apache-mod_rails-ri < 4.0
 
 %description -n ruby-passenger-ri
-ri documentation for Phusion Passenger
+ri documentation for Phusion Passenger.
 
 %description -n ruby-passenger-ri -l pl.UTF-8
-Dokumentacji w formacie ri dla Phusion Passenger
+Dokumentacji w formacie ri dla Phusion Passengera.
 
 %prep
 %setup -q -n %{name}-release-%{version}
@@ -94,7 +107,7 @@ __rubydir=$(echo %{ruby_vendorlibdir} | %{__sed} -e 's|/usr||')
 %{__sed} -i -e 's|#!/usr/bin/env ruby|#!%{_bindir}/ruby|' helper-scripts/{prespawn,download_binaries/extconf.rb,*.rb} bin/*
 
 # Don't use bundled libev
-rm -r ext/libev
+%{__rm} -r ext/libev
 
 %build
 export USE_VENDORED_LIBEV=false
@@ -104,6 +117,7 @@ export CFLAGS="%{rpmcflags} -fno-strict-aliasing"
 export CXXFLAGS="%{rpmcxxflags} -fno-strict-aliasing"
 export EXTRA_CFLAGS="%{rpmcflags} -fno-strict-aliasing"
 export EXTRA_CXXFLAGS="%{rpmcxxflags} -fno-strict-aliasing"
+export EXTRA_PRE_LDFLAGS="%{rpmldflags}"
 
 export APACHECTL=%{_sbindir}/apachectl
 export HTTPD_VERSION=$(rpm -q apache-devel --qf '%{V}')
@@ -119,10 +133,10 @@ rake apache2 V=1 \
 #
 # This will make the test failure non-critical, but it should be examined
 # anyway.
-sed -i 's|sh "cd test && \./cxx/CxxTestMain"|& rescue true|' build/cxx_tests.rb
+%{__sed} -i 's|sh "cd test && \./cxx/CxxTestMain"|& rescue true|' build/cxx_tests.rb
 
 # adjust for rspec 2 while the test suite seems to require RSpec 1.
-sed -i \
+%{__sed} -i \
 	"s|return locate_ruby_tool('spec')|return locate_ruby_tool('rspec')|" \
 	lib/phusion_passenger/platform_info/ruby.rb
 
