@@ -6,7 +6,7 @@ Summary:	A module to bridge Ruby on Rails to Apache
 Summary(pl.UTF-8):	Moduł służący za bramkę Ruby on Rails do Apache'a
 Name:		passenger
 Version:	4.0.50
-Release:	5
+Release:	6
 # Passenger code uses MIT license.
 # Bundled(Boost) uses Boost Software License
 # BCrypt and Blowfish files use BSD license.
