@@ -6,7 +6,7 @@ Summary:	A module to bridge Ruby on Rails to Apache
 Summary(pl.UTF-8):	Moduł służący za bramkę Ruby on Rails do Apache'a
 Name:		passenger
 Version:	4.0.50
-Release:	7
+Release:	8
 # Passenger code uses MIT license.
 # Bundled(Boost) uses Boost Software License
 # BCrypt and Blowfish files use BSD license.
@@ -146,7 +146,7 @@ rake test --trace
 # UTF8 locale needed for doc generation
 LC_ALL=en_US.UTF-8 \
 rdoc --ri --op ri lib ext/ruby
-%{__rm} -r ri/{GC,IO,Object,Signal,CommonLibraryBuilder,Exception,DaemonController}
+%{__rm} -r ri/{GC,IO,Object,Signal,CommonLibraryBuilder,Exception}
 %{__rm} ri/{cache.ri,created.rid}
 
 %install
