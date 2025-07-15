@@ -94,7 +94,7 @@ Dokumentacji w formacie ri dla Phusion Passengera.
 
 %prep
 %setup -q -n %{name}-release-%{version}
-#%patch0 -p1
+#%%patch0 -p1
 %patch -P1 -p1
 
 %{__sed} -i -e 's|#!/usr/bin/env python|#!%{_bindir}/python3|' src/helper-scripts/*.py
